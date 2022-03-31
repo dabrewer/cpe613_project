@@ -2,6 +2,7 @@
 #include <string.h>
 #include <fstream>
 #include <sys/time.h>
+#include <stdlib.h>
 
 #include <mesh.h>
 
