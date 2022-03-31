@@ -12,7 +12,7 @@ using namespace std;
 // DEFINITIONS
 // ################################################################################
 // Define macro for easier 3d memory access
-#define POTENTIALS(x,y,z) ptr_potentials[(z * _x_size * _y_size) + (y * _x_size) + x] 
+#define POTENTIALS(x,y,z) potentials[(z * _x_size * _y_size) + (y * _x_size) + x] 
 
 // ################################################################################
 // MESH
@@ -49,7 +49,7 @@ Mesh::Mesh( const uint16_t x_size, const uint16_t y_size, const uint16_t z_size 
 
 Mesh::~Mesh()
 {
-    //delete potentials;
+    delete potentials;
 }
 
 void Mesh::init()
@@ -58,12 +58,9 @@ void Mesh::init()
     if( _potentials_initialized == false)
     {
         _potentials_initialized = true;
-        //// Dynamically allocate space for array
-        //potentials = new Voxel[getNumVoxels()];
+        // Dynamically allocate space for array
+        potentials = new Voxel[getNumVoxels()];
         // All voxels will be initalized to 0.0V by default
-
-        ptr_potentials = potentials0;
-        ptr_potentials_shadow = potentials1;
     }
 
     // NOTE: this call can be modified later to accomodate more geometries
@@ -215,26 +212,24 @@ double Mesh::iterate( float accel_factor )
 {
     double maxError = 0.0f;
 
-    //Voxel *potentials_shadow;
-    //potentials_shadow = new Voxel[getNumVoxels()];   
+    Voxel *potentials_shadow;
+    potentials_shadow = new Voxel[getNumVoxels()];   
 
     double error;
     for(uint16_t i = 0; i < getNumVoxels(); i++)
     {
-        ptr_potentials_shadow[i] = sor(accel_factor, i);
+        potentials_shadow[i] = sor(accel_factor, i);
 
-        error = fabs(ptr_potentials_shadow[i].getValue() - ptr_potentials[i].getValue());
+        error = fabs(potentials_shadow[i].getValue() - potentials[i].getValue());
 
         if(error > maxError)
             maxError = error;
     }
 
-    //delete potentials;
-    Voxel *swap = ptr_potentials;
-    ptr_potentials = ptr_potentials_shadow;
-    ptr_potentials_shadow = swap;
+    delete potentials;
+    potentials = potentials_shadow;
 
-    cout << maxError << endl;
+    //cout << maxError << endl;
 
     return maxError;
 }

@@ -5,8 +5,6 @@
 
 #include <voxel.h>
 
-#define MAX_VOXELS  100*100*100
-
 class Mesh
 {
 public:
@@ -23,10 +21,7 @@ private:
     uint16_t _x_size;
     uint16_t _y_size;
     uint16_t _z_size;
-    Voxel *ptr_potentials;
-    Voxel *ptr_potentials_shadow;
-    Voxel potentials0[MAX_VOXELS];
-    Voxel potentials1[MAX_VOXELS];
+    Voxel *potentials;
     bool _potentials_initialized;
 
     Voxel sor( float accel_factor, uint16_t i );
