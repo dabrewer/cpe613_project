@@ -12,7 +12,7 @@ using namespace std;
 // DEFINITIONS
 // ################################################################################
 // Define macro for easier 3d memory access
-#define POTENTIALS(x,y,z) potentials[(z * _x_size * _y_size) + (y * _x_size) + x] 
+#define POTENTIALS(x,y,z) potentials[((z) * _x_size * _y_size) + ((y) * _x_size) + (x)] 
 
 // ################################################################################
 // MESH
