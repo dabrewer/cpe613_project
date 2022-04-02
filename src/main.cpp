@@ -4,7 +4,7 @@
 #include <sys/time.h>
 #include <stdlib.h>
 
-#include <mesh.h>
+#include <solve.h>
 
 using namespace std;
 
@@ -39,7 +39,6 @@ struct timeval tv1,tv2;
 // ################################################################################
 int main( int argc, char *argv[] )
 {
-    Mesh *mesh;
     uint16_t iterations;
     ofstream statFile;
 
@@ -57,7 +56,7 @@ int main( int argc, char *argv[] )
 
     // Initialize 3D voltage mesh representing physical geometry
     cout << "Initializing Mesh..." << endl;
-    mesh = new Mesh(atoi(MESH_SIZE));
+    init(atoi(MESH_SIZE));
 
     // Start iteration
     cout << "Starting Iteration..." << endl;
@@ -65,7 +64,7 @@ int main( int argc, char *argv[] )
     TIMER_START;
     
     iterations = 0;
-    while(mesh->iterate(ACCEL_FACT) > PRECISION)
+    while(solve() > PRECISION)
     {
         iterations++;
     }
@@ -78,11 +77,11 @@ int main( int argc, char *argv[] )
     cout << "Elapsed Time: " << TIMER_ELAPSED << endl;
 
     // Save mesh model to output file
-    mesh->save(FNAME_MESH_OUT);
+    //mesh->save(FNAME_MESH_OUT);
 
     // Append run statistics to output file
     statFile.open(FNAME_STAT_OUT, ios_base::app);
-    statFile << 'S' << "," << mesh->getNumVoxels() << "," << iterations << "," << TIMER_ELAPSED << endl;  
+    statFile << 'S' << "," << MESH_SIZE << "," << iterations << "," << TIMER_ELAPSED << endl;
 
-    delete mesh;
+    deinit();
 }

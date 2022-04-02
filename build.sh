@@ -7,5 +7,8 @@ mkdir -p $OUT_PATH
 mkdir -p $OUT_PATH/post
 mkdir -p $BIN_PATH
 
-# Build executables
-g++ -Isrc_serial/include/ src_serial/main.cpp src_serial/mesh.cpp src_serial/voxel.cpp -o $BIN_PATH/main_serial -O3
+# Build cpu executables
+g++ -Isrc/include/ src/main.cpp src/solve_cpu.cpp src/voxel.cpp -o $BIN_PATH/main_cpu -O3
+
+# Build gpu executables
+#g++ -Isrc/include/ src/main.cpp src/solve_gpu.cpp src/voxel.cpp -o $BIN_PATH/main_gpu -O3
