@@ -106,28 +106,32 @@ void initCapacitor()
     }
 }
 
-double solve()
+void solve(uint16_t *iterations)
 {
-    maxError = 0.0;
-
+    double maxError;
     double error;
-    for(uint16_t i = 0; i < numVoxels; i++)
+
+    *iterations = 0;
+
+    while(maxError < PRECISION)
     {
-        potentials_shadow[i] = sor(i);
+        *iterations++;
 
-        error = fabs(potentials_shadow[i].getValue() - potentials[i].getValue());
+        maxError = 0;
+        for(uint16_t i = 0; i < numVoxels; i++)
+        {
+            potentials_shadow[i] = sor(i);
 
-        if(error > maxError)
-            maxError = error;
+            error = fabs(potentials_shadow[i].getValue() - potentials[i].getValue());
+
+            if(error > maxError)
+                maxError = error;
+        }
     }
 
     Voxel *swap = potentials;
     potentials = potentials_shadow;
     potentials_shadow = swap;
-
-    //cout << maxError << endl;
-
-    return maxError;
 }
 
 Voxel sor(uint16_t i)

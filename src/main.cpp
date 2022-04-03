@@ -29,12 +29,6 @@ using namespace std;
 struct timeval tv1,tv2;
 
 // ################################################################################
-// GLOBAL VARIABLES
-// ################################################################################
-#define ACCEL_FACT  1.0
-#define PRECISION   0.001
-
-// ################################################################################
 // MAIN
 // ################################################################################
 int main( int argc, char *argv[] )
@@ -64,10 +58,7 @@ int main( int argc, char *argv[] )
     TIMER_START;
     
     iterations = 0;
-    while(solve() > PRECISION)
-    {
-        iterations++;
-    }
+    solve(&iterations);
     
     TIMER_STOP;
 
