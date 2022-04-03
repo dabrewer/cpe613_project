@@ -16,6 +16,12 @@ uint32_t numVoxels;
 Voxel *potentials;
 Voxel *potentials_shadow;
 
+// Private function declarations
+void initBoundaries();
+void initCapacitor();
+Voxel sor(uint16_t i);
+double residual(uint16_t x, uint16_t y, uint16_t z);
+
 void init(uint16_t size)
 {
     maxError = 0.0;

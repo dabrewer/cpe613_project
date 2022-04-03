@@ -13,10 +13,6 @@
 
 void init(uint16_t size);
 void deinit();
-void initBoundaries();
-void initCapacitor();
 void solve();
-Voxel sor(uint16_t i);
-double residual(uint16_t x, uint16_t y, uint16_t z);
 
 #endif //_SOLVE_H_
