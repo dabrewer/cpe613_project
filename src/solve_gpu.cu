@@ -8,20 +8,22 @@
 
 using namespace std;
 
-__global__ double maxError;
-__global__ uint16_t _x_size;
-__global__ uint16_t _y_size;
-__global__ uint16_t _z_size;
-__global__ uint32_t numVoxels;
-__global__ Voxel *potentials;
-__global__ Voxel *potentials_shadow;
+double maxError;
+uint16_t _x_size;
+uint16_t _y_size;
+uint16_t _z_size;
+uint32_t numVoxels;
+Voxel *potentials;
+Voxel *potentials_shadow;
+dim3 dimGrid;
+dim3 dimBlock;
 
 // Private function declarations
 void initBoundaries();
 void initCapacitor();
-__device__ Voxel sor(uint16_t i);
-__device__ double residual(uint16_t x, uint16_t y, uint16_t z);
-__global__ void solveKernel(Voxel *potentials, Voxel *potentials_shadow);
+__device__ Voxel sor(uint16_t i, Voxel *potentials, Voxel *potentials_shadow, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size);
+__device__ double residual(uint16_t x, uint16_t y, uint16_t z, Voxel *potentials, Voxel *potentials_shadow, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size));
+__global__ void solveKernel(Voxel *potentials, Voxel *potentials_shadow, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size);
 
 
 void init(uint16_t size)
@@ -40,10 +42,8 @@ void init(uint16_t size)
     initBoundaries();
     initCapacitor();
 
-    // dim3 dimGrid;
-    // dimGrid.x = iceil(Nw,TILE_WIDTH); 
-    // dimGrid.y = iceil(Mh,TILE_WIDTH); 
-    // dim3 dimBlock(TILE_WIDTH,TILE_WIDTH);
+    dimGrid = dim3(2,1,1);
+    dimBlock = dim3(2,1,1);
 }
 
 void deinit()
@@ -123,7 +123,7 @@ void solve()
 {
     cudaError_t error_id;
 
-    solveKernel<<<dimGrid, dimBlock>>>(Pd, Md, Nd, Mh, Mw, Nw);
+    solveKernel<<<dimGrid, dimBlock>>>(potentials, potentials_shadow, _x_size, _y_size, _z_size);
 
     error_id=cudaGetLastError();
     if (error_id != cudaSuccess)
@@ -132,6 +132,8 @@ void solve()
         (int)error_id, cudaGetErrorString(error_id) );
         exit(EXIT_FAILURE);
     }
+
+    cudaDeviceSynchronize();
 }
 
 __global__ void solveKernel(Voxel *potentials, Voxel *potentials_shadow, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size)
@@ -144,7 +146,7 @@ __global__ void solveKernel(Voxel *potentials, Voxel *potentials_shadow, uint16_
         maxError = 0;
         for(uint16_t i = 0; i < numVoxels; i++)
         {
-            potentials_shadow[i] = sor(i);
+            potentials_shadow[i] = sor(i, potentials, potentials_shadow, _x_size, _y_size, _z_size);
 
             error = fabs(potentials_shadow[i].getValue() - potentials[i].getValue());
 
@@ -158,7 +160,7 @@ __global__ void solveKernel(Voxel *potentials, Voxel *potentials_shadow, uint16_
     } while(maxError > PRECISION);
 }
 
-__device__ Voxel sor(uint16_t i)
+__device__ Voxel sor(uint16_t i, Voxel *potentials, Voxel *potentials_shadow, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size)
 {
     Voxel voxel;
     uint16_t x;
@@ -180,7 +182,7 @@ __device__ Voxel sor(uint16_t i)
     return Voxel(newValue, voxel.isBoundary());
 }
 
-__device__ double residual(uint16_t x, uint16_t y, uint16_t z)
+__device__ double residual(uint16_t x, uint16_t y, uint16_t z, Voxel *potentials, Voxel *potentials_shadow, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size)
 {   
     double rv;
 

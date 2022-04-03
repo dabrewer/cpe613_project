@@ -216,7 +216,7 @@ endif
 # Target rules
 all: build
 
-build: main_cu
+build: main_gpu
 
 check.deps:
 ifeq ($(SAMPLE_ENABLED),0)
@@ -244,7 +244,7 @@ main_gpu: main.o solve_gpu.o voxel.o
 	$(EXEC) $(NVCC) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $+ $(LIBRARIES)
 
 run: build
-	$(EXEC) ./main_cpu
+	$(EXEC) ./main_gpu
 
 clean:
 	rm -f gpu_matrixmul.o matrixmul.o util.o matrixmul_gold.o util2.o *.bin *.gold *.gpu 
