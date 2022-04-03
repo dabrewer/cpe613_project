@@ -33,7 +33,7 @@ struct timeval tv1,tv2;
 // ################################################################################
 int main( int argc, char *argv[] )
 {
-    uint16_t iterations;
+    //uint16_t iterations;
     ofstream statFile;
 
     if(argc != NUM_ARGS)
@@ -57,14 +57,14 @@ int main( int argc, char *argv[] )
     TIMER_CLEAR;
     TIMER_START;
     
-    iterations = 0;
-    solve(&iterations);
+    //iterations = 0;
+    solve();
     
     TIMER_STOP;
 
     // Display run information on screen
     cout << "Saving Results..." << endl;
-    cout << "Iterations: " << iterations << endl;
+    //cout << "Iterations: " << iterations << endl;
     cout << "Elapsed Time: " << TIMER_ELAPSED << endl;
 
     // Save mesh model to output file
@@ -72,7 +72,7 @@ int main( int argc, char *argv[] )
 
     // Append run statistics to output file
     statFile.open(FNAME_STAT_OUT, ios_base::app);
-    statFile << 'S' << "," << MESH_SIZE << "," << iterations << "," << TIMER_ELAPSED << endl;
+    statFile << 'S' << "," << MESH_SIZE << "," << /*iterations << "," <<*/ TIMER_ELAPSED << endl;
 
     deinit();
 }

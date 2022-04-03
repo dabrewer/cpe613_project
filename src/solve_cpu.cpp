@@ -106,17 +106,13 @@ void initCapacitor()
     }
 }
 
-void solve(uint16_t *iterations)
+void solve()
 {
     double maxError;
     double error;
 
-    *iterations = 0;
-
-    while(maxError < PRECISION)
+    do
     {
-        *iterations++;
-
         maxError = 0;
         for(uint16_t i = 0; i < numVoxels; i++)
         {
@@ -127,11 +123,11 @@ void solve(uint16_t *iterations)
             if(error > maxError)
                 maxError = error;
         }
-    }
 
-    Voxel *swap = potentials;
-    potentials = potentials_shadow;
-    potentials_shadow = swap;
+        Voxel *swap = potentials;
+        potentials = potentials_shadow;
+        potentials_shadow = swap;
+    } while(maxError > PRECISION);
 }
 
 Voxel sor(uint16_t i)
