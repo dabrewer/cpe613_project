@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include <voxel.h>
 #include <solve.h>
 
 using namespace std;
@@ -13,18 +12,21 @@ uint16_t _x_size;
 uint16_t _y_size;
 uint16_t _z_size;
 uint32_t numVoxels;
-Voxel *potentials;
-Voxel *potentials_shadow;
+float *potentials;
+float *potentials_shadow;
+bool *isBoundary;
 dim3 dimGrid;
 dim3 dimBlock;
 
 // Private function declarations
 void initBoundaries();
 void initCapacitor();
-__device__ Voxel sor(uint16_t i, Voxel *potentials, Voxel *potentials_shadow, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size);
-__device__ double residual(uint16_t x, uint16_t y, uint16_t z, Voxel *potentials, Voxel *potentials_shadow, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size);
-__global__ void solveKernel(Voxel *potentials, Voxel *potentials_shadow, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size);
+__device__ float sor(uint16_t i, float *potentials, float *potentials_shadow, bool *isBoundary, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size);
+__device__ float residual(uint16_t x, uint16_t y, uint16_t z, float *potentials, float *potentials_shadow, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size);
+__global__ void solveKernel(float *potentials, float *potentials_shadow, bool *isBoundary, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size);
 
+// Define macro for easier 3d memory access
+#define GET_INDEX(x,y,z) (((z) * _x_size * _y_size) + ((y) * _x_size) + (x))
 
 void init(uint16_t size)
 {
@@ -36,8 +38,9 @@ void init(uint16_t size)
 
     numVoxels = _x_size * _y_size * _z_size;
 
-    cudaMallocManaged(&potentials,numVoxels*sizeof(Voxel)));
-    cudaMallocManaged(&potentials_shadow,numVoxels*sizeof(Voxel)));
+    cudaMallocManaged(&potentials,numVoxels*sizeof(float));
+    cudaMallocManaged(&potentials_shadow,numVoxels*sizeof(float));
+    cudaMallocManaged(&isBoundary,numVoxels*sizeof(float))
 
     initBoundaries();
     initCapacitor();
@@ -50,6 +53,7 @@ void deinit()
 {
     cudaFree(potentials);
     cudaFree(potentials_shadow);
+    cudaFree(isBoundary);
 }
 
 void initBoundaries()
@@ -59,8 +63,10 @@ void initBoundaries()
     {
         for(int k = 0; k < _z_size; k++)
         {
-            POTENTIALS(0,j,k) = Voxel(0.0, true);
-            POTENTIALS((_x_size-1),j,k) = Voxel(0.0, true);
+            potentials[GET_INDEX(0,j,k)] = 0.0;
+            isBoundary[GET_INDEX(0,j,k)] = true;
+            potentials[GET_INDEX((_x_size-1),j,k)] = 0.0;
+            isBoundary[GET_INDEX((_x_size-1),j,k)] = true;
         }
     }
     // Set y-plane boundaries
@@ -68,8 +74,10 @@ void initBoundaries()
     {
         for(int k = 0; k < _z_size; k++)
         {
-            POTENTIALS(i,0,k) = Voxel(0.0, true);
-            POTENTIALS(i,(_y_size-1),k) = Voxel(0.0, true);
+            potentials[GET_INDEX(i,0,k)] = 0.0;
+            isBoundary[GET_INDEX(i,0,k)] = true;
+            potentials[GET_INDEX(i,(_y_size-1),k)] = 0.0;
+            isBoundary[GET_INDEX(i,(_y_size-1),k)] = true;
         }
     }
     // Set z-plane boundaries
@@ -77,8 +85,10 @@ void initBoundaries()
     {
         for(int j = 0; j < _y_size; j++)
         {
-            POTENTIALS(i,j,0) = Voxel(0.0, true);
-            POTENTIALS(i,j,(_x_size-1)) = Voxel(0.0, true);
+            potentials[GET_INDEX(i,j,0)] = 0.0;
+            isBoundary[GET_INDEX(i,j,0)] = true;
+            potentials[GET_INDEX(i,j,(_x_size-1))] = 0.0;
+            isBoundary[GET_INDEX(i,j,(_x_size-1))] = true;
         }
     }
 }
@@ -108,12 +118,14 @@ void initCapacitor()
             // Set potentials for plate 1
             for(int j = y1_min; j <= y1_max; j++)
             {
-                POTENTIALS(i,j,k) = Voxel(plate1_potential, true);
+                potentials[GET_INDEX(i,j,k)] = plate1_potential;
+                isBoundary[GET_INDEX(i,j,k)] = true;
             }
             // Set potentials for plate 2
             for(int j = y2_min; j <= y2_max; j++)
             {
-                POTENTIALS(i,j,k) = Voxel(plate2_potential, true);
+                potentials[GET_INDEX(i,j,k)] = plate2_potential;
+                isBoundary[GET_INDEX(i,j,k)] = true;
             }
         }
     }
@@ -123,7 +135,7 @@ void solve()
 {
     cudaError_t error_id;
 
-    solveKernel<<<dimGrid, dimBlock>>>(potentials, potentials_shadow, _x_size, _y_size, _z_size);
+    solveKernel<<<dimGrid, dimBlock>>>(potentials, potentials_shadow, isBoundary, _x_size, _y_size, _z_size);
 
     error_id=cudaGetLastError();
     if (error_id != cudaSuccess)
@@ -136,7 +148,7 @@ void solve()
     cudaDeviceSynchronize();
 }
 
-__global__ void solveKernel(Voxel *potentials, Voxel *potentials_shadow, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size)
+__global__ void solveKernel(float *potentials, float *potentials_shadow, float isBoundary, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size)
 {
     double maxError;
     double error;
@@ -144,42 +156,37 @@ __global__ void solveKernel(Voxel *potentials, Voxel *potentials_shadow, uint16_
     do
     {
         maxError = 0;
-        for(uint16_t i = 0; i < numVoxels; i++)
+        for(uint16_t i = 0; i < (_x_size*_y_size*_z_size); i++)
         {
-            potentials_shadow[i] = sor(i, potentials, potentials_shadow, _x_size, _y_size, _z_size);
+            potentials_shadow[i] = sor(i, potentials, potentials_shadow, isBoundary, _x_size, _y_size, _z_size);
 
-            error = fabs(potentials_shadow[i].getValue() - potentials[i].getValue());
+            error = fabs(potentials_shadow[i] - potentials[i]);
 
             if(error > maxError)
                 maxError = error;
         }
 
-        Voxel *swap = potentials;
+        float *swap = potentials;
         potentials = potentials_shadow;
         potentials_shadow = swap;
     } while(maxError > PRECISION);
 }
 
-__device__ Voxel sor(uint16_t i, Voxel *potentials, Voxel *potentials_shadow, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size)
+__device__ Voxel sor(uint16_t i, float *potentials, float *potentials_shadow, bool isBoundary, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size)
 {
     Voxel voxel;
     uint16_t x;
     uint16_t y;
     uint16_t z;
-    double newValue;
 
     x = i % _x_size; // TODO:CONVERT i -> x
     y = (i / _x_size) % _y_size; // TODO:CONVERT i -> y
     z = (i / _x_size) / _y_size; // TODO:CONVERT i -> z
 
-    voxel = POTENTIALS(x,y,z);
+    if(isBoundary[GET_INDEX(x,y,z)])
+        return potentials[i];
 
-    if(voxel.isBoundary())
-        return voxel;
-
-    newValue = voxel.getValue() + (ACCEL_FACTOR / 6.0) * residual(x, y, z);
-
-    return Voxel(newValue, voxel.isBoundary());
+    return potentials[i] + (ACCEL_FACTOR / 6.0) * residual(x, y, z, potentials, potentials_shadow, _x_size, _y_size, _z_size);
 }
 
 __device__ double residual(uint16_t x, uint16_t y, uint16_t z, Voxel *potentials, Voxel *potentials_shadow, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size)
@@ -192,22 +199,22 @@ __device__ double residual(uint16_t x, uint16_t y, uint16_t z, Voxel *potentials
 
     // Right Node
     if((x+1) < _x_size)
-        rv += POTENTIALS(x+1,y,z).getValue() - POTENTIALS(x,y,z).getValue();
+        rv += potentials(GET_INDEX(x+1,y,z)) - potentials(GET_INDEX(x,y,z));
     // Left Node
     if((x-1) >= 0)
-        rv += POTENTIALS(x-1,y,z).getValue() - POTENTIALS(x,y,z).getValue();
+        rv += potentials(GET_INDEX(x-1,y,z)) - potentials(GET_INDEX(x,y,z));
     // Top Node
     if((y+1) < _y_size)
-        rv += POTENTIALS(x,y+1,z).getValue() - POTENTIALS(x,y,z).getValue();
+        rv += potentials(GET_INDEX(x,y+1,z)) - potentials(GET_INDEX(x,y,z));
     // Bottom Node
     if((y-1) >= 0)
-        rv += POTENTIALS(x,y-1,z).getValue() - POTENTIALS(x,y,z).getValue();
+        rv += potentials(GET_INDEX(x,y-1,z)) - potentials(GET_INDEX(x,y,z));
     // Front Node
     if((z+1) < _z_size)
-        rv += POTENTIALS(x,y,z+1).getValue() - POTENTIALS(x,y,z).getValue();
+        rv += potentials(GET_INDEX(x,y,z+1)) - potentials(GET_INDEX(x,y,z));
     // Back Node
     if((z-1) >= 0)
-        rv += POTENTIALS(x,y,z-1).getValue() - POTENTIALS(x,y,z).getValue();
+        rv += potentials(GET_INDEX(x,y,z-1)) - potentials(GET_INDEX(x,y,z));
 
     return rv;
 }
