@@ -22,7 +22,7 @@ dim3 dimBlock;
 void initBoundaries();
 void initCapacitor();
 __device__ Voxel sor(uint16_t i, Voxel *potentials, Voxel *potentials_shadow, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size);
-__device__ double residual(uint16_t x, uint16_t y, uint16_t z, Voxel *potentials, Voxel *potentials_shadow, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size));
+__device__ double residual(uint16_t x, uint16_t y, uint16_t z, Voxel *potentials, Voxel *potentials_shadow, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size);
 __global__ void solveKernel(Voxel *potentials, Voxel *potentials_shadow, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size);
 
 
