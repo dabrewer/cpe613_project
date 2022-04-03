@@ -238,7 +238,7 @@ main.o:main.cpp
 	$(EXEC) $(HOST_COMPILER) $(INCLUDES) -o $@ -c $<
 
 main_cpu: main.o solve_cpu.o voxel.o
-	$(EXEC) $(NVCC) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $+ $(LIBRARIES)
+	$(EXEC) $(HOST_COMPILER) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $+ $(LIBRARIES)
 
 main_gpu: main.o solve_gpu.o voxel.o
 	$(EXEC) $(NVCC) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $+ $(LIBRARIES)
