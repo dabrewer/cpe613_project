@@ -88,11 +88,11 @@ void initCapacitor()
     uint16_t z_min = (_y_size / 10) * 3;
     uint16_t z_max = ((_y_size / 10) * 8) - 1;
     // Define height of plate 1
-    uint16_t y1_min = (_y_size / 10) * 4;
-    uint16_t y1_max = ((_y_size / 10) * 5) - 1;
+    uint16_t y1_min = (_y_size / 10) * 3;
+    uint16_t y1_max = ((_y_size / 10) * 4) - 1;
     // Define height of plate 2
-    uint16_t y2_min = (_y_size / 10) * 4;
-    uint16_t y2_max = ((_y_size / 10) * 5) - 1;
+    uint16_t y2_min = (_y_size / 10) * 6;
+    uint16_t y2_max = ((_y_size / 10) * 7) - 1;
 
     for(int i = x_min; i <= x_max; i++)
     {
