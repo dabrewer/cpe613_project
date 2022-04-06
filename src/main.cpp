@@ -68,7 +68,7 @@ int main( int argc, char *argv[] )
     cout << "Elapsed Time: " << TIMER_ELAPSED << endl;
 
     // Save mesh model to output file
-    //mesh->save(FNAME_MESH_OUT);
+    save(FNAME_MESH_OUT);
 
     // Append run statistics to output file
     statFile.open(FNAME_STAT_OUT, ios_base::app);

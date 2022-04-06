@@ -7,7 +7,7 @@
 
 using namespace std;
 
-double maxError;
+float maxError;
 uint16_t _x_size;
 uint16_t _y_size;
 uint16_t _z_size;
@@ -30,8 +30,6 @@ __global__ void solveKernel(float *potentials, float *potentials_shadow, bool *i
 
 void init(uint16_t size)
 {
-    maxError = 0.0;
-
     _x_size = size;
     _y_size = size;
     _z_size = size;
@@ -96,8 +94,8 @@ void initBoundaries()
 void initCapacitor()
 {
     // Define plate potential
-    double plate1_potential = 12.0;
-    double plate2_potential = -12.0;
+    float plate1_potential = 12.0;
+    float plate2_potential = -12.0;
     // Define width common to both plates
     uint16_t x_min = (_x_size / 10) * 3;
     uint16_t x_max = ((_x_size / 10) * 8) - 1;
@@ -150,8 +148,8 @@ void solve()
 
 __global__ void solveKernel(float *potentials, float *potentials_shadow, float isBoundary, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size)
 {
-    double maxError;
-    double error;
+    float maxError;
+    float error;
 
     do
     {
@@ -172,7 +170,7 @@ __global__ void solveKernel(float *potentials, float *potentials_shadow, float i
     } while(maxError > PRECISION);
 }
 
-__device__ Voxel sor(uint16_t i, float *potentials, float *potentials_shadow, bool isBoundary, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size)
+__device__ float sor(uint16_t i, float *potentials, float *potentials_shadow, bool isBoundary, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size)
 {
     Voxel voxel;
     uint16_t x;
@@ -189,9 +187,9 @@ __device__ Voxel sor(uint16_t i, float *potentials, float *potentials_shadow, bo
     return potentials[i] + (ACCEL_FACTOR / 6.0) * residual(x, y, z, potentials, potentials_shadow, _x_size, _y_size, _z_size);
 }
 
-__device__ double residual(uint16_t x, uint16_t y, uint16_t z, Voxel *potentials, Voxel *potentials_shadow, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size)
+__device__ float residual(uint16_t x, uint16_t y, uint16_t z, Voxel *potentials, Voxel *potentials_shadow, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size)
 {   
-    double rv;
+    float rv;
 
     // Calculate Residual Error in Each Direction
     // Must ensure not to reach outside mesh model
@@ -217,4 +215,14 @@ __device__ double residual(uint16_t x, uint16_t y, uint16_t z, Voxel *potentials
         rv += potentials(GET_INDEX(x,y,z-1)) - potentials(GET_INDEX(x,y,z));
 
     return rv;
+}
+
+void save(const char *fname)
+{
+    FILE *fp = fopen(fname, "w");
+    for(uint32_t i = 0; i < numVoxels; i++)
+    {
+        fprintf(fp, "%lf\n", potentials[i]);
+        //printf("%lf %lf %lf %d\n", (double)(x * _mesh_size), (double)(y * _mesh_size), POTENTIALS(x,y).getValue(), POTENTIALS(x,y).isBoundary());
+    }
 }

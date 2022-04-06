@@ -9,5 +9,6 @@
 void init(uint16_t size);
 void deinit();
 void solve();
+void save(const char *fname);
 
 #endif //_SOLVE_H_

@@ -6,13 +6,13 @@ Voxel::Voxel( void )
     _isBoundary = false;
 }
 
-Voxel::Voxel( double value )
+Voxel::Voxel( float value )
 {
     _value = value;
     _isBoundary = false;
 }
 
-Voxel::Voxel( double value, bool isBoundary )
+Voxel::Voxel( float value, bool isBoundary )
 {
     _value = value;
     _isBoundary = isBoundary;
@@ -23,12 +23,12 @@ bool Voxel::isBoundary( void )
     return _isBoundary;
 }
 
-void Voxel::setValue( double value )
+void Voxel::setValue( float value )
 {
     _value = value;
 }
 
-double Voxel::getValue( void )
+float Voxel::getValue( void )
 {
     return _value;
 }

@@ -8,7 +8,6 @@
 
 using namespace std;
 
-double maxError;
 uint16_t _x_size;
 uint16_t _y_size;
 uint16_t _z_size;
@@ -20,15 +19,13 @@ Voxel *potentials_shadow;
 void initBoundaries();
 void initCapacitor();
 Voxel sor(uint16_t i);
-double residual(uint16_t x, uint16_t y, uint16_t z);
+float residual(uint16_t x, uint16_t y, uint16_t z);
 
 // Define macro for easier 3d memory access
 #define POTENTIALS(x,y,z) potentials[((z) * _x_size * _y_size) + ((y) * _x_size) + (x)] 
 
 void init(uint16_t size)
 {
-    maxError = 0.0;
-
     _x_size = size;
     _y_size = size;
     _z_size = size;
@@ -82,8 +79,8 @@ void initBoundaries()
 void initCapacitor()
 {
     // Define plate potential
-    double plate1_potential = 12.0;
-    double plate2_potential = -12.0;
+    float plate1_potential = 12.0;
+    float plate2_potential = -12.0;
     // Define width common to both plates
     uint16_t x_min = (_x_size / 10) * 3;
     uint16_t x_max = ((_x_size / 10) * 8) - 1;
@@ -117,8 +114,8 @@ void initCapacitor()
 
 void solve()
 {
-    double maxError;
-    double error;
+    float maxError;
+    float error;
 
     do
     {
@@ -145,7 +142,7 @@ Voxel sor(uint16_t i)
     uint16_t x;
     uint16_t y;
     uint16_t z;
-    double newValue;
+    float newValue;
 
     x = i % _x_size; // TODO:CONVERT i -> x
     y = (i / _x_size) % _y_size; // TODO:CONVERT i -> y
@@ -161,9 +158,9 @@ Voxel sor(uint16_t i)
     return Voxel(newValue, voxel.isBoundary());
 }
 
-double residual(uint16_t x, uint16_t y, uint16_t z)
+float residual(uint16_t x, uint16_t y, uint16_t z)
 {   
-    double rv;
+    float rv;
 
     // Calculate Residual Error in Each Direction
     // Must ensure not to reach outside mesh model
@@ -189,4 +186,14 @@ double residual(uint16_t x, uint16_t y, uint16_t z)
         rv += POTENTIALS(x,y,z-1).getValue() - POTENTIALS(x,y,z).getValue();
 
     return rv;
+}
+
+void save(const char *fname)
+{
+    FILE *fp = fopen(fname, "w");
+    for(uint32_t i = 0; i < numVoxels; i++)
+    {
+        fprintf(fp, "%lf\n", potentials[i].getValue());
+        //printf("%lf %lf %lf %d\n", (double)(x * _mesh_size), (double)(y * _mesh_size), POTENTIALS(x,y).getValue(), POTENTIALS(x,y).isBoundary());
+    }
 }
