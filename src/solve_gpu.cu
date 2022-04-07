@@ -21,7 +21,7 @@ dim3 dimBlock;
 // Private function declarations
 void initBoundaries();
 void initCapacitor();
-__device__ float sor(uint16_t i, float *potentials, float *potentials_shadow, bool *isBoundary, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size);
+__device__ float sor(uint16_t i, uint16_t x, uint16_t y, uint16_t z, float *potentials, float *potentials_shadow, bool *isBoundary, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size);
 __device__ float residual(uint16_t x, uint16_t y, uint16_t z, float *potentials, float *potentials_shadow, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size);
 __global__ void solveKernel(float *potentials, float *potentials_shadow, bool *isBoundary, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size);
 
@@ -133,53 +133,48 @@ void solve()
 {
     cudaError_t error_id;
 
-    solveKernel<<<dimGrid, dimBlock>>>(potentials, potentials_shadow, isBoundary, _x_size, _y_size, _z_size);
-
-    error_id=cudaGetLastError();
-    if (error_id != cudaSuccess)
+    //TODO: make kernel call to find precision and convert to while loop
+    for(int i = 0; i < 600; i++)
     {
-        printf( "Attempted Launch of solveKernel returned %d\n-> %s\n",
-        (int)error_id, cudaGetErrorString(error_id) );
-        exit(EXIT_FAILURE);
-    }
+        solveKernel<<<dimGrid, dimBlock>>>(potentials, potentials_shadow, isBoundary, _x_size, _y_size, _z_size);
 
-    cudaDeviceSynchronize();
-}
-
-__global__ void solveKernel(float *potentials, float *potentials_shadow, float isBoundary, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size)
-{
-    float maxError;
-    float error;
-
-    do
-    {
-        maxError = 0;
-        for(uint16_t i = 0; i < (_x_size*_y_size*_z_size); i++)
+        error_id=cudaGetLastError();
+        if (error_id != cudaSuccess)
         {
-            potentials_shadow[i] = sor(i, potentials, potentials_shadow, isBoundary, _x_size, _y_size, _z_size);
-
-            error = fabs(potentials_shadow[i] - potentials[i]);
-
-            if(error > maxError)
-                maxError = error;
+            printf( "Attempted Launch of solveKernel returned %d\n-> %s\n",
+            (int)error_id, cudaGetErrorString(error_id) );
+            exit(EXIT_FAILURE);
         }
+
+        cudaDeviceSynchronize();
 
         float *swap = potentials;
         potentials = potentials_shadow;
         potentials_shadow = swap;
-    } while(maxError > PRECISION);
+    }
 }
 
-__device__ float sor(uint16_t i, float *potentials, float *potentials_shadow, bool isBoundary, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size)
+__global__ void solveKernel(float *potentials, float *potentials_shadow, float isBoundary, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size)
+{
+    int x = (blockDim.x * blockIdx.x) + threadIdx.x;
+    int y = (blockDim.y * blockIdx.y) + threadIdx.y;
+    int z = (blockDim.z * blockIdx.z) + threadIdx.z;
+
+    potentials_shadow[i] = sor(x, y, z, potentials, potentials_shadow, isBoundary, _x_size, _y_size, _z_size);
+
+    error[i] = fabs(potentials_shadow[i] - potentials[i]);
+}
+
+__device__ float sor(uint16_t i, uint16_t x, uint16_t y, uint16_t z, float *potentials, float *potentials_shadow, bool isBoundary, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size)
 {
     Voxel voxel;
-    uint16_t x;
-    uint16_t y;
-    uint16_t z;
+    // uint16_t x;
+    // uint16_t y;
+    // uint16_t z;
 
-    x = i % _x_size; // TODO:CONVERT i -> x
-    y = (i / _x_size) % _y_size; // TODO:CONVERT i -> y
-    z = (i / _x_size) / _y_size; // TODO:CONVERT i -> z
+    // x = i % _x_size; // TODO:CONVERT i -> x
+    // y = (i / _x_size) % _y_size; // TODO:CONVERT i -> y
+    // z = (i / _x_size) / _y_size; // TODO:CONVERT i -> z
 
     if(isBoundary[GET_INDEX(x,y,z)])
         return potentials[i];
