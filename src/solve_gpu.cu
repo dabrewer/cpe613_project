@@ -43,8 +43,8 @@ void init(uint16_t size)
     initBoundaries();
     initCapacitor();
 
-    dimGrid = dim3(2,1,1);
-    dimBlock = dim3(2,1,1);
+    dimGrid = dim3(1,1,1);
+    dimBlock = dim3(_x_size, _y_size, _z_size);
 }
 
 void deinit()
