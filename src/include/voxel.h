@@ -12,9 +12,12 @@ public:
     bool isBoundary( void );
     void setValue( float value );
     float getValue( void );
+    void setField( float *field );
+    void getField( float *field );
 
 private:
     float _value;
+    float _field[3];
     bool _isBoundary;
 };
 

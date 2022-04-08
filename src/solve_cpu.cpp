@@ -17,9 +17,12 @@ Voxel *potentials_shadow;
 
 // Private function declarations
 void initBoundaries();
-void initCapacitor();
+void init_capacitor();
 Voxel sor(uint16_t i);
 float residual(uint16_t x, uint16_t y, uint16_t z);
+void solve_potential();
+void solve_field();
+void calc_field(uint16_t x, uint16_t y, uint16_t z, float *dV);
 
 // Define macro for easier 3d memory access
 #define POTENTIALS(x,y,z) potentials[((z) * _x_size * _y_size) + ((y) * _x_size) + (x)] 
@@ -36,7 +39,7 @@ void init(uint16_t size)
     potentials_shadow = new Voxel[numVoxels];
 
     initBoundaries();
-    initCapacitor();
+    init_capacitor();
 }
 
 void deinit()
@@ -76,7 +79,7 @@ void initBoundaries()
     }
 }
 
-void initCapacitor()
+void init_capacitor()
 {
     // Define plate potential
     float plate1_potential = 12.0;
@@ -114,6 +117,13 @@ void initCapacitor()
 
 void solve()
 {
+    solve_potential();
+    solve_field();
+}
+
+void solve_potential()
+{
+    uint16_t iterations;
     float maxError;
     float error;
 
@@ -134,6 +144,59 @@ void solve()
         potentials = potentials_shadow;
         potentials_shadow = swap;
     } while(maxError > PRECISION);
+}
+
+void solve_field()
+{
+    for(uint16_t i = 0; i < numVoxels; i++)
+    {
+        float dV[3];
+        uint16_t x;
+        uint16_t y;
+        uint16_t z;
+
+        x = i % _x_size; // TODO:CONVERT i -> x
+        y = (i / _x_size) % _y_size; // TODO:CONVERT i -> y
+        z = (i / _x_size) / _y_size; // TODO:CONVERT i -> z
+
+        calc_field(x, y, z, dV);
+
+        POTENTIALS(x,y,z).setField(dV);
+    }
+}
+
+void calc_field(uint16_t x, uint16_t y, uint16_t z, float *dV)
+{
+    // Approximate Field with Stencil Computation
+    // Must ensure not to reach outside mesh model
+    dV[0] = 0.0; // x
+    dV[1] = 0.0; // y
+    dV[2] = 0.0; // z
+
+    // Calculate dV_dx
+    // Consider both boundary conditions as special cases
+    if((x > 0) && (x < (_x_size-1)))
+        dV[0] = POTENTIALS(x-1,y,z).getValue() - POTENTIALS(x+1,y,z).getValue();
+    if(x == 0)
+        dV[0] = POTENTIALS(x,y,z).getValue() - POTENTIALS(x+1,y,z).getValue();
+    if(x == (_x_size-1))
+        dV[0] = POTENTIALS(x-1,y,z).getValue() - POTENTIALS(x,y,z).getValue();
+    // Calculate dV_dy
+    // Consider both boundary conditions as special cases
+    if((y > 0) && (y < (_y_size-1)))
+        dV[1] = POTENTIALS(x,y-1,z).getValue() - POTENTIALS(x,y+1,z).getValue();
+    if(y == 0)
+        dV[1] = POTENTIALS(x,y,z).getValue() - POTENTIALS(x,y+1,z).getValue();
+    if(y == (_y_size-1))
+        dV[1] = POTENTIALS(x,y-1,z).getValue() - POTENTIALS(x,y,z).getValue();
+    // Calculate dV_dz
+    // Consider both boundary conditions as special cases
+    if((z > 0) && (z < (_z_size-1)))
+        dV[2] = POTENTIALS(x,y,z-1).getValue() - POTENTIALS(x,y,z+1).getValue();
+    if(z == 0)
+        dV[2] = POTENTIALS(x,y,z).getValue() - POTENTIALS(x,y,z+1).getValue();
+    if(z == (_z_size-1))
+        dV[2] = POTENTIALS(x,y,z-1).getValue() - POTENTIALS(x,y,z).getValue();
 }
 
 Voxel sor(uint16_t i)
@@ -188,12 +251,25 @@ float residual(uint16_t x, uint16_t y, uint16_t z)
     return rv;
 }
 
-void save(const char *fname)
+void save(const char *pfname, const char *ffname)
 {
-    FILE *fp = fopen(fname, "w");
+    FILE *fp;
+
+    // Save Potentials
+    fp = fopen(pfname, "w");
     for(uint32_t i = 0; i < numVoxels; i++)
     {
         fprintf(fp, "%lf\n", potentials[i].getValue());
-        //printf("%lf %lf %lf %d\n", (double)(x * _mesh_size), (double)(y * _mesh_size), POTENTIALS(x,y).getValue(), POTENTIALS(x,y).isBoundary());
     }
+    fclose(fp);
+
+    // Save Fields
+    fp = fopen(ffname, "w");
+    for(uint32_t i = 0; i < numVoxels; i++)
+    {
+        float field[3];
+        potentials[i].getField(field);
+        fprintf(fp, "%lf\t%lf\t%lf\n", field[0], field[1], field[2]);
+    }
+    fclose(fp);
 }

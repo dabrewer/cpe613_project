@@ -11,11 +11,12 @@ using namespace std;
 // ################################################################################
 // CMD LINE ARG DEFINITIONS
 // ################################################################################
-#define NUM_ARGS    4
-#define USAGE       "./bin/main [MESH_SIZE] [FNAME_MESH_OUT] [FNAME_STAT_OUT]"
+#define NUM_ARGS    5
+#define USAGE       "./bin/main [MESH_SIZE] [FNAME_MESH_OUT] [FNAME_FIELD_OUT] [FNAME_STAT_OUT]"
 #define MESH_SIZE   argv[1]
 #define FNAME_MESH_OUT   argv[2]
-#define FNAME_STAT_OUT   argv[3]
+#define FNAME_FIELD_OUT   argv[3]
+#define FNAME_STAT_OUT   argv[4]
 
 // ################################################################################
 // TIMER COMPONENTS
@@ -68,7 +69,7 @@ int main( int argc, char *argv[] )
     cout << "Elapsed Time: " << TIMER_ELAPSED << endl;
 
     // Save mesh model to output file
-    save(FNAME_MESH_OUT);
+    save(FNAME_MESH_OUT, FNAME_FIELD_OUT);
 
     // Append run statistics to output file
     statFile.open(FNAME_STAT_OUT, ios_base::app);

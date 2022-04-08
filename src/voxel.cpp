@@ -32,3 +32,17 @@ float Voxel::getValue( void )
 {
     return _value;
 }
+
+void Voxel::setField( float *field )
+{
+    _field[0] = field[0];
+    _field[1] = field[1];
+    _field[2] = field[2];
+}
+
+void Voxel::getField( float *field )
+{
+    field[0] = _field[0];
+    field[1] = _field[1];
+    field[2] = _field[2];
+}
