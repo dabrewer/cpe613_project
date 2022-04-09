@@ -226,7 +226,7 @@ else
 endif
 
 main.o:main.cu
-	$(EXEC) $(HOST_COMPILER) $(INCLUDES) -o $@ -c $<
+	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
 
 main_gpu: main.o
 	$(EXEC) $(NVCC) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $+ $(LIBRARIES)
