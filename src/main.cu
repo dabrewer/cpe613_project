@@ -70,6 +70,7 @@ int main( int argc, char *argv[] )
         return -1;
     }
 
+   // _x_size = atoi(MESH_SIZE);
     // Initialize 3D voltage mesh representing physical geometry
     cout << atoi(MESH_SIZE) << endl;
     cout << "Initializing Mesh..." << endl;
@@ -79,11 +80,11 @@ int main( int argc, char *argv[] )
     // INIT CODE START
     // ################################################################################
     cout << "dbg-3";
-    _x_size = MESH_SIZE;
+    _x_size = atoi(MESH_SIZE);
     cout << "dbg-2";
-    _y_size = MESH_SIZE;
+    _y_size = atoi(MESH_SIZE);
     cout << "dbg-1";
-    _z_size = MESH_SIZE;
+    _z_size = atoi(MESH_SIZE);
 
     cout << "dbg0";
     numVoxels = _x_size * _y_size * _z_size;
@@ -320,4 +321,16 @@ __device__ float residual(uint16_t x, uint16_t y, uint16_t z, float *potentials,
         rv += potentials[GET_INDEX(x,y,z-1)] - potentials[GET_INDEX(x,y,z)];
 
     return rv;
+}
+
+__global__ void solveKernel(float *potentials, float *potentials_shadow, bool *isBoundary, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size)
+{
+    uint16_t x = (blockDim.x * blockIdx.x) + threadIdx.x;
+    uint16_t y = (blockDim.y * blockIdx.y) + threadIdx.y;
+    uint16_t z = (blockDim.z * blockIdx.z) + threadIdx.z;
+    uint16_t i = GET_INDEX(x,y,z);
+
+    potentials_shadow[i] = sor(i,x, y, z, potentials, potentials_shadow, isBoundary, _x_size, _y_size, _z_size);
+
+    //error[i] = fabs(potentials_shadow[i] - potentials[i]);
 }
