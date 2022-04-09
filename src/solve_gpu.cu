@@ -30,18 +30,28 @@ __global__ void solveKernel(float *potentials, float *potentials_shadow, bool *i
 
 void init(uint16_t size)
 {
+    cout << "dbg-3";
     _x_size = size;
+    cout << "dbg-2";
     _y_size = size;
+    cout << "dbg-1";
     _z_size = size;
 
+    cout << "dbg0";
     numVoxels = _x_size * _y_size * _z_size;
 
+    cout << "dbg1";
     cudaMallocManaged(&potentials,numVoxels*sizeof(float));
+    cout << "dbg2";
     cudaMallocManaged(&potentials_shadow,numVoxels*sizeof(float));
-    cudaMallocManaged(&isBoundary,numVoxels*sizeof(float));
+    cout << "dbg3";
+    cudaMallocManaged(&isBoundary,numVoxels*sizeof(bool));
+    cout << "dbg4";
 
     initBoundaries();
+    cout << "dbg5";
     initCapacitor();
+    cout << "dbg6";
 
     dimGrid = dim3(1,1,1);
     dimBlock = dim3(_x_size, _y_size, _z_size);

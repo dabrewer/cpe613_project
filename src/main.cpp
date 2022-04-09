@@ -50,6 +50,7 @@ int main( int argc, char *argv[] )
     }
 
     // Initialize 3D voltage mesh representing physical geometry
+    cout << atoi(MESH_SIZE) << endl;
     cout << "Initializing Mesh..." << endl;
     init(atoi(MESH_SIZE));
 

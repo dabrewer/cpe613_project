@@ -240,14 +240,14 @@ main.o:main.cpp
 main_cpu: main.o solve_cpu.o voxel.o
 	$(EXEC) $(HOST_COMPILER) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $+ $(LIBRARIES)
 
-main_gpu: main.o solve_gpu.o voxel.o
+main_gpu: main.o solve_gpu.o
 	$(EXEC) $(NVCC) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $+ $(LIBRARIES)
 
 run: build
 	$(EXEC) ./main_gpu
 
 clean:
-	rm -f gpu_matrixmul.o matrixmul.o util.o matrixmul_gold.o util2.o *.bin *.gold *.gpu 
+	rm -f solve_gpu.o solve_cpu.o voxel.o main.o main_cpu main_gpu 
 	rm -rf ../bin/$(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)/matrixmul_cu
 
 clobber: clean

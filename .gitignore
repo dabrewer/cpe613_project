@@ -3,3 +3,4 @@ output/*
 .vscode/*
 scripts/.DS_Store
 .DS_Store
+*.o
