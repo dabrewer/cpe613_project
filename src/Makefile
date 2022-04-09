@@ -225,29 +225,16 @@ else
 	@echo "Sample is ready - all dependencies have been met"
 endif
 
-voxel.o:voxel.cpp
+main.o:main.cu
 	$(EXEC) $(HOST_COMPILER) $(INCLUDES) -o $@ -c $<
 
-solve_gpu.o:solve_gpu.cu
-	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
-
-solve_cpu.o:solve_cpu.cpp
-	$(EXEC) $(HOST_COMPILER) $(INCLUDES) -o $@ -c $<
-
-main.o:main.cpp
-	$(EXEC) $(HOST_COMPILER) $(INCLUDES) -o $@ -c $<
-
-main_cpu: main.o solve_cpu.o voxel.o
-	$(EXEC) $(HOST_COMPILER) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $+ $(LIBRARIES)
-
-main_gpu: main.o solve_gpu.o
+main_gpu: main.o
 	$(EXEC) $(NVCC) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $+ $(LIBRARIES)
 
 run: build
 	$(EXEC) ./main_gpu
 
 clean:
-	rm -f solve_gpu.o solve_cpu.o voxel.o main.o main_cpu main_gpu 
-	rm -rf ../bin/$(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)/matrixmul_cu
+	rm -f main.o main_cpu main_gpu 
 
 clobber: clean
