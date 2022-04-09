@@ -228,13 +228,16 @@ endif
 main.o:main.cu
 	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
 
-main_gpu: main.o
+solve_gpu.o:solve_gpu.cu
+	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
+
+main_gpu: main.o solve_gpu.o
 	$(EXEC) $(NVCC) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $+ $(LIBRARIES)
 
 run: build
 	$(EXEC) ./main_gpu
 
 clean:
-	rm -f main.o main_cpu main_gpu 
+	rm -f main.o solve_gpu.o main_gpu 
 
 clobber: clean
