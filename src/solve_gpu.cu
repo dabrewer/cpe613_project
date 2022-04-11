@@ -40,7 +40,7 @@ void init(uint16_t size)
     cout << "dbg0";
     numVoxels = _x_size * _y_size * _z_size;
 
-    cout << "dbg1";
+    cout << numVoxels;
     cudaMallocManaged(&potentials,numVoxels*sizeof(float));
     cout << "dbg2";
     cudaMallocManaged(&potentials_shadow,numVoxels*sizeof(float));
@@ -53,8 +53,8 @@ void init(uint16_t size)
     initCapacitor();
     cout << "dbg6";
 
-    dimGrid = dim3(1,1,1);
-    dimBlock = dim3(_x_size, _y_size, _z_size);
+    dimGrid = dim3(10,10,10);
+    dimBlock = dim3(_x_size/10, _y_size/10, _z_size/10);
 }
 
 void deinit()
@@ -113,11 +113,11 @@ void initCapacitor()
     uint16_t z_min = (_y_size / 10) * 3;
     uint16_t z_max = ((_y_size / 10) * 8) - 1;
     // Define height of plate 1
-    uint16_t y1_min = (_y_size / 10) * 4;
-    uint16_t y1_max = ((_y_size / 10) * 5) - 1;
+    uint16_t y1_min = (_y_size / 10) * 3;
+    uint16_t y1_max = ((_y_size / 10) * 4) - 1;
     // Define height of plate 2
-    uint16_t y2_min = (_y_size / 10) * 4;
-    uint16_t y2_max = ((_y_size / 10) * 5) - 1;
+    uint16_t y2_min = (_y_size / 10) * 6;
+    uint16_t y2_max = ((_y_size / 10) * 7) - 1;
 
     for(int i = x_min; i <= x_max; i++)
     {
@@ -144,7 +144,7 @@ void solve()
     cudaError_t error_id;
 
     //TODO: make kernel call to find precision and convert to while loop
-    for(int i = 0; i < 600; i++)
+    for(int i = 0; i < 361; i++)
     {
         solveKernel<<<dimGrid, dimBlock>>>(potentials, potentials_shadow, isBoundary, _x_size, _y_size, _z_size);
 
