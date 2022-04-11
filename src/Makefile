@@ -216,9 +216,10 @@ DEFINES = "-DGPU"
 ################################################################################
 
 # Target rules
-all: build
+all: gpu cpu
 
-build: ../bin/main_gpu
+gpu: ../bin/main_gpu
+cpu: ../bin/main_cpu
 
 check.deps:
 ifeq ($(SAMPLE_ENABLED),0)
@@ -230,7 +231,10 @@ endif
 obj/main_cpu.o:main.cpp
 	$(EXEC) $(HOST_COMPILER) $(INCLUDES) -o $@ -c $<
 
-obj/solve_cpu.o:solve_cpu.cpp voxel.cpp
+obj/solve_cpu.o:solve_cpu.cpp
+	$(EXEC) $(HOST_COMPILER) $(INCLUDES) -o $@ -c $<
+
+obj/voxel.o:voxel.cpp
 	$(EXEC) $(HOST_COMPILER) $(INCLUDES) -o $@ -c $<
 
 obj/main_gpu.o:main.cpp
@@ -239,14 +243,17 @@ obj/main_gpu.o:main.cpp
 obj/solve_gpu.o:solve_gpu.cu
 	$(EXEC) $(NVCC) $(INCLUDES) $(DEFINES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
 
-../bin/main_gpu: obj/main.o obj/solve_gpu.o
+../bin/main_gpu: obj/main_gpu.o obj/solve_gpu.o
 	$(EXEC) $(NVCC) $(DEFINES) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $+ $(LIBRARIES)
 
-../bin/main_cpu: main.o solve_cpu.o
-	$(EXEC) $(HOST_COMPILER) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $+ $(LIBRARIES)
+../bin/main_cpu: obj/main_cpu.o obj/solve_cpu.o obj/voxel.o
+	$(EXEC) $(HOST_COMPILER) $(INCLUDES) -o $@ $+ $(LIBRARIES)
 
-run: build
-	$(EXEC) ../bin/./main_gpu
+#run: gpu
+#	$(EXEC) ../bin/./main_gpu
+
+#run: cpu
+#	$(EXEC) ../bin/./main_cpu
 
 clean:
 	rm -f obj/*.o ../bin/*

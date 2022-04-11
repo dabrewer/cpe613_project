@@ -11,6 +11,7 @@ using namespace std;
 // ################################################################################
 // CMD LINE ARG DEFINITIONS
 // ################################################################################
+#ifdef GPU
 #define NUM_ARGS    8
 #define USAGE       "./bin/main_gpu [MESH_SIZE] [TILE_WIDTH_X] [TILE_WIDTH_Y] [TILE_WIDTH_Z] [FNAME_MESH_OUT] [FNAME_FIELD_OUT] [FNAME_STAT_OUT]"
 #define MESH_SIZE       argv[1]
@@ -20,6 +21,14 @@ using namespace std;
 #define FNAME_MESH_OUT  argv[5]
 #define FNAME_FIELD_OUT argv[6]
 #define FNAME_STAT_OUT  argv[7]
+#else
+#define NUM_ARGS    5
+#define USAGE       "./bin/main_cpu [MESH_SIZE] [FNAME_MESH_OUT] [FNAME_FIELD_OUT] [FNAME_STAT_OUT]"
+#define MESH_SIZE   argv[1]
+#define FNAME_MESH_OUT   argv[2]
+#define FNAME_FIELD_OUT   argv[3]
+#define FNAME_STAT_OUT   argv[4]
+#endif
 
 // ################################################################################
 // TIMER COMPONENTS
