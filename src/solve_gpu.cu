@@ -28,33 +28,32 @@ __global__ void solveKernel(float *potentials, float *potentials_shadow, bool *i
 // Define macro for easier 3d memory access
 #define GET_INDEX(x,y,z) (((z) * _x_size * _y_size) + ((y) * _x_size) + (x))
 
-void init(uint16_t size)
-{
-    cout << "dbg-3";
-    _x_size = size;
-    cout << "dbg-2";
-    _y_size = size;
-    cout << "dbg-1";
-    _z_size = size;
+#define iceil(num,den) (num+den-1)/den
 
-    cout << "dbg0";
+void init(uint16_t size, uint16_t tile_width_x, uint16_t tile_width_y, uint16_t tile_width_z)
+{
+    // store x, y, z dimensions
+    _x_size = size;
+    _y_size = size;
+    _z_size = size;
+    // calculate total number of voxels
     numVoxels = _x_size * _y_size * _z_size;
 
-    cout << "dbg1";
+    // Allocate unified memory for all arrays
     cudaMallocManaged(&potentials,numVoxels*sizeof(float));
-    cout << "dbg2";
     cudaMallocManaged(&potentials_shadow,numVoxels*sizeof(float));
-    cout << "dbg3";
     cudaMallocManaged(&isBoundary,numVoxels*sizeof(bool));
-    cout << "dbg4";
 
+    // Init environment
     initBoundaries();
-    cout << "dbg5";
     initCapacitor();
-    cout << "dbg6";
 
-    dimGrid = dim3(1,1,1);
-    dimBlock = dim3(_x_size, _y_size, _z_size);
+    // Init grid dimensions
+    dimGrid.x = iceil(_x_size, tile_width_x);
+    dimGrid.y = iceil(_y_size, tile_width_y);
+    dimGrid.y = iceil(_z_size, tile_width_z);
+    // Init block dimensions
+    dimBlock = dim3(tile_width_x, tile_width_y, tile_width_z);
 }
 
 void deinit()
@@ -113,11 +112,11 @@ void initCapacitor()
     uint16_t z_min = (_y_size / 10) * 3;
     uint16_t z_max = ((_y_size / 10) * 8) - 1;
     // Define height of plate 1
-    uint16_t y1_min = (_y_size / 10) * 4;
-    uint16_t y1_max = ((_y_size / 10) * 5) - 1;
+    uint16_t y1_min = (_y_size / 10) * 3;
+    uint16_t y1_max = ((_y_size / 10) * 4) - 1;
     // Define height of plate 2
-    uint16_t y2_min = (_y_size / 10) * 4;
-    uint16_t y2_max = ((_y_size / 10) * 5) - 1;
+    uint16_t y2_min = (_y_size / 10) * 6;
+    uint16_t y2_max = ((_y_size / 10) * 7) - 1;
 
     for(int i = x_min; i <= x_max; i++)
     {
@@ -144,7 +143,7 @@ void solve()
     cudaError_t error_id;
 
     //TODO: make kernel call to find precision and convert to while loop
-    for(int i = 0; i < 600; i++)
+    for(int i = 0; i < 361; i++)
     {
         solveKernel<<<dimGrid, dimBlock>>>(potentials, potentials_shadow, isBoundary, _x_size, _y_size, _z_size);
 
@@ -178,15 +177,6 @@ __global__ void solveKernel(float *potentials, float *potentials_shadow, bool *i
 
 __device__ float sor(uint16_t i, uint16_t x, uint16_t y, uint16_t z, float *potentials, float *potentials_shadow, bool *isBoundary, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size)
 {
-    //Voxel voxel;
-    // uint16_t x;
-    // uint16_t y;
-    // uint16_t z;
-
-    // x = i % _x_size; // TODO:CONVERT i -> x
-    // y = (i / _x_size) % _y_size; // TODO:CONVERT i -> y
-    // z = (i / _x_size) / _y_size; // TODO:CONVERT i -> z
-
     if(isBoundary[GET_INDEX(x,y,z)])
         return potentials[i];
 

@@ -211,12 +211,14 @@ ifeq ($(SAMPLE_ENABLED),0)
 EXEC ?= @echo "[@]"
 endif
 
+DEFINES = "-DGPU"
+
 ################################################################################
 
 # Target rules
 all: build
 
-build: main_gpu
+build: ../bin/main_gpu
 
 check.deps:
 ifeq ($(SAMPLE_ENABLED),0)
@@ -225,29 +227,19 @@ else
 	@echo "Sample is ready - all dependencies have been met"
 endif
 
-voxel.o:voxel.cpp
-	$(EXEC) $(HOST_COMPILER) $(INCLUDES) -o $@ -c $<
+obj/main.o:main.cu
+	$(EXEC) $(NVCC) $(INCLUDES) $(DEFINES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
 
-solve_gpu.o:solve_gpu.cu
-	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
+obj/solve_gpu.o:solve_gpu.cu
+	$(EXEC) $(NVCC) $(INCLUDES) $(DEFINES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
 
-solve_cpu.o:solve_cpu.cpp
-	$(EXEC) $(HOST_COMPILER) $(INCLUDES) -o $@ -c $<
-
-main.o:main.cpp
-	$(EXEC) $(HOST_COMPILER) $(INCLUDES) -o $@ -c $<
-
-main_cpu: main.o solve_cpu.o voxel.o
-	$(EXEC) $(HOST_COMPILER) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $+ $(LIBRARIES)
-
-main_gpu: main.o solve_gpu.o
-	$(EXEC) $(NVCC) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $+ $(LIBRARIES)
+../bin/main_gpu: obj/main.o obj/solve_gpu.o
+	$(EXEC) $(NVCC) $(DEFINES) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $+ $(LIBRARIES)
 
 run: build
-	$(EXEC) ./main_gpu
+	$(EXEC) ../bin/./main_gpu
 
 clean:
-	rm -f solve_gpu.o solve_cpu.o voxel.o main.o main_cpu main_gpu 
-	rm -rf ../bin/$(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)/matrixmul_cu
+	rm -f obj/*.o ../bin/*
 
 clobber: clean
