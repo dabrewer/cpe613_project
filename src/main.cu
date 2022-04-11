@@ -54,11 +54,6 @@ int main( int argc, char *argv[] )
     cout << "Initializing Mesh..." << endl;
     init(atoi(MESH_SIZE));
 
-    initBoundaries();
-    cout << "dbg5";
-    initCapacitor();
-    cout << "dbg6";
-
     // Start iteration
     cout << "Starting Iteration..." << endl;
     TIMER_CLEAR;
