@@ -11,12 +11,15 @@ using namespace std;
 // ################################################################################
 // CMD LINE ARG DEFINITIONS
 // ################################################################################
-#define NUM_ARGS    5
-#define USAGE       "./bin/main [MESH_SIZE] [FNAME_MESH_OUT] [FNAME_FIELD_OUT] [FNAME_STAT_OUT]"
-#define MESH_SIZE   argv[1]
-#define FNAME_MESH_OUT   argv[2]
-#define FNAME_FIELD_OUT   argv[3]
-#define FNAME_STAT_OUT   argv[4]
+#define NUM_ARGS    8
+#define USAGE       "./bin/main_gpu [MESH_SIZE] [TILE_WIDTH_X] [TILE_WIDTH_Y] [TILE_WIDTH_Z] [FNAME_MESH_OUT] [FNAME_FIELD_OUT] [FNAME_STAT_OUT]"
+#define MESH_SIZE       argv[1]
+#define TILE_WIDTH_X    argv[2]
+#define TILE_WIDTH_Y    argv[2]
+#define TILE_WIDTH_Z    argv[2]
+#define FNAME_MESH_OUT  argv[5]
+#define FNAME_FIELD_OUT argv[6]
+#define FNAME_STAT_OUT  argv[7]
 
 // ################################################################################
 // TIMER COMPONENTS
@@ -49,10 +52,21 @@ int main( int argc, char *argv[] )
         return -1;
     }
 
+#ifdef GPU
+    if(atoi(TILE_WIDTH_X) * atoi(TILE_WIDTH_Y) * atoi(TILE_WIDTH_Z) > 1024)
+    {
+        cout << "The product of TILE_WIDTH_X, TILE_WIDTH_Y, and TILE_WIDTH_Z must be less than 1024";
+        return -1;
+    }
+#endif
+
     // Initialize 3D voltage mesh representing physical geometry
-    cout << atoi(MESH_SIZE) << endl;
     cout << "Initializing Mesh..." << endl;
+#ifdef GPU
+    init(atoi(MESH_SIZE), atoi(TILE_WIDTH_X), atoi(TILE_WIDTH_Y), atoi(TILE_WIDTH_Z));
+#else
     init(atoi(MESH_SIZE));
+#endif
 
     // Start iteration
     cout << "Starting Iteration..." << endl;
@@ -61,7 +75,7 @@ int main( int argc, char *argv[] )
     
     //iterations = 0;
     solve();
-
+    
     TIMER_STOP;
 
     // Display run information on screen
@@ -71,7 +85,7 @@ int main( int argc, char *argv[] )
 
     // Save mesh model to output file
     save(FNAME_MESH_OUT, FNAME_FIELD_OUT);
-   
+
     // Append run statistics to output file
     statFile.open(FNAME_STAT_OUT, ios_base::app);
     statFile << 'S' << "," << MESH_SIZE << "," << /*iterations << "," <<*/ TIMER_ELAPSED << endl;

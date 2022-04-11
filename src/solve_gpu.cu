@@ -39,13 +39,7 @@ void init(uint16_t size, uint16_t tile_width_x, uint16_t tile_width_y, uint16_t 
     // calculate total number of voxels
     numVoxels = _x_size * _y_size * _z_size;
 
-<<<<<<< HEAD
     // Allocate unified memory for all arrays
-||||||| merged common ancestors
-    cout << "dbg1";
-=======
-    cout << numVoxels;
->>>>>>> 35e0abf6e27a2cc9f4b665dbdcbb13fdacaf6993
     cudaMallocManaged(&potentials,numVoxels*sizeof(float));
     cudaMallocManaged(&potentials_shadow,numVoxels*sizeof(float));
     cudaMallocManaged(&isBoundary,numVoxels*sizeof(bool));
@@ -54,20 +48,12 @@ void init(uint16_t size, uint16_t tile_width_x, uint16_t tile_width_y, uint16_t 
     initBoundaries();
     initCapacitor();
 
-<<<<<<< HEAD
     // Init grid dimensions
     dimGrid.x = iceil(_x_size, tile_width_x);
     dimGrid.y = iceil(_y_size, tile_width_y);
     dimGrid.y = iceil(_z_size, tile_width_z);
     // Init block dimensions
-    dimBlock = dim3(_x_size, _y_size, _z_size);
-||||||| merged common ancestors
-    dimGrid = dim3(1,1,1);
-    dimBlock = dim3(_x_size, _y_size, _z_size);
-=======
-    dimGrid = dim3(10,10,10);
-    dimBlock = dim3(_x_size/10, _y_size/10, _z_size/10);
->>>>>>> 35e0abf6e27a2cc9f4b665dbdcbb13fdacaf6993
+    dimBlock = dim3(tile_width_x, tile_width_y, tile_width_z);
 }
 
 void deinit()
