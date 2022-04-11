@@ -227,7 +227,13 @@ else
 	@echo "Sample is ready - all dependencies have been met"
 endif
 
-obj/main.o:main.cu
+obj/main_cpu.o:main.cpp
+	$(EXEC) $(HOST_COMPILER) $(INCLUDES) -o $@ -c $<
+
+obj/solve_cpu.o:solve_cpu.cpp voxel.cpp
+	$(EXEC) $(HOST_COMPILER) $(INCLUDES) -o $@ -c $<
+
+obj/main_gpu.o:main.cpp
 	$(EXEC) $(NVCC) $(INCLUDES) $(DEFINES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
 
 obj/solve_gpu.o:solve_gpu.cu
@@ -235,6 +241,9 @@ obj/solve_gpu.o:solve_gpu.cu
 
 ../bin/main_gpu: obj/main.o obj/solve_gpu.o
 	$(EXEC) $(NVCC) $(DEFINES) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $+ $(LIBRARIES)
+
+../bin/main_cpu: main.o solve_cpu.o
+	$(EXEC) $(HOST_COMPILER) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $+ $(LIBRARIES)
 
 run: build
 	$(EXEC) ../bin/./main_gpu
