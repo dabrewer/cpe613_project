@@ -218,7 +218,7 @@ DEFINES = "-DGPU"
 # Target rules
 all: build
 
-build: main_gpu
+build: ../bin/main_gpu
 
 check.deps:
 ifeq ($(SAMPLE_ENABLED),0)
@@ -227,19 +227,19 @@ else
 	@echo "Sample is ready - all dependencies have been met"
 endif
 
-main.o:main.cu
+obj/main.o:main.cu
 	$(EXEC) $(NVCC) $(INCLUDES) $(DEFINES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
 
-solve_gpu.o:solve_gpu.cu
+obj/solve_gpu.o:solve_gpu.cu
 	$(EXEC) $(NVCC) $(INCLUDES) $(DEFINES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
 
-main_gpu: main.o solve_gpu.o
+../bin/main_gpu: obj/main.o obj/solve_gpu.o
 	$(EXEC) $(NVCC) $(DEFINES) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $+ $(LIBRARIES)
 
 run: build
-	$(EXEC) ./main_gpu
+	$(EXEC) ../bin/./main_gpu
 
 clean:
-	rm -f main.o solve_gpu.o main_gpu 
+	rm -f obj/*.o ../bin/*
 
 clobber: clean
