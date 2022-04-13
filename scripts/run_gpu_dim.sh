@@ -18,24 +18,19 @@ SIZE=512
 ####################################################################################################
 # PROGRAM EXECUTION FUNCTIONS
 ####################################################################################################
-run_gpu_dim()
-{
-    for c in {1..10}
-        for i in ${TILE_WIDTH_X[@]}
+for c in {1..10}
+    for i in ${TILE_WIDTH_X[@]}
+    do
+        for j in ${TILE_WIDTH_Y[@]}
         do
-            for j in ${TILE_WIDTH_Y[@]}
+            for k in ${TILE_WIDTH_Z[@]}
             do
-                for k in ${TILE_WIDTH_Z[@]}
-                do
-                    if [ $(($i * $j * $k)) -le 1024 ]
-                    then
-                        #echo "$i" "$j" "$k";
-                        ./bin/main_gpu "$SIZE" "$i" "$j" "$k" $OUT_PATH/$SIZE.v $OUT_PATH/$SIZE.e $OUT_PATH/$SIZE.s >> $OUT_PATH/gpu_${c}_${i}_${j}_${k}.out
-                    fi
-                done
+                if [ $(($i * $j * $k)) -le 1024 ]
+                then
+                    #echo "$i" "$j" "$k";
+                    ./bin/main_gpu "$SIZE" "$i" "$j" "$k" $OUT_PATH/$SIZE.v $OUT_PATH/$SIZE.e $OUT_PATH/$SIZE.s >> $OUT_PATH/gpu_${c}_${i}_${j}_${k}.out
+                fi
             done
         done
     done
-}
-
-run_gpu_dim()
+done

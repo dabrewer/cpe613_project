@@ -3,7 +3,7 @@
 ####################################################################################################
 # DEFINITIONS
 ####################################################################################################
-OUT_PATH=output/cpu/
+OUT_PATH=output/cpu
 BIN_PATH=bin
 
 ####################################################################################################
@@ -14,17 +14,13 @@ CPU_SIZE_RANGE="10 15 20 25 30 35 40"
 ####################################################################################################
 # PROGRAM EXECUTION FUNCTIONS
 ####################################################################################################
-run_cpu()
-{
-    for i in {1..10}
+for i in {1..10}
+do
+    echo Testing...
+    for s in $CPU_SIZE_RANGE
     do
-        for s in $CPU_SIZE_RANGE
-        do
-            ./bin/main_cpu ${s} $OUT_PATH/${s}.v $OUT_PATH/${s}.e $OUT_PATH/stat.out >> $OUT_PATH/cpu_${i}_${s}.txt
-            shasum $OUT_PATH/${s}.v >> $OUT_PATH/${s}.vsum
-            shasum $OUT_PATH/${s}.e >> $OUT_PATH/${s}.esum
-        done
+        ./bin/main_cpu ${s} $OUT_PATH/${s}.v $OUT_PATH/${s}.e $OUT_PATH/stat.out >> $OUT_PATH/cpu_${i}_${s}.txt
+        shasum $OUT_PATH/${s}.v | awk '{print $1}' >> $OUT_PATH/${s}.vsum
+        shasum $OUT_PATH/${s}.e | awk '{print $1}' >> $OUT_PATH/${s}.esum
     done
-}
-
-run_cpu()
+done
