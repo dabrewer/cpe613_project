@@ -16,8 +16,8 @@ using namespace std;
 #define USAGE       "./bin/main_gpu [MESH_SIZE] [TILE_WIDTH_X] [TILE_WIDTH_Y] [TILE_WIDTH_Z] [FNAME_MESH_OUT] [FNAME_FIELD_OUT] [FNAME_STAT_OUT]"
 #define MESH_SIZE       argv[1]
 #define TILE_WIDTH_X    argv[2]
-#define TILE_WIDTH_Y    argv[2]
-#define TILE_WIDTH_Z    argv[2]
+#define TILE_WIDTH_Y    argv[3]
+#define TILE_WIDTH_Z    argv[4]
 #define FNAME_MESH_OUT  argv[5]
 #define FNAME_FIELD_OUT argv[6]
 #define FNAME_STAT_OUT  argv[7]
