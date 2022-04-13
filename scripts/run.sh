@@ -1,63 +1,51 @@
 #!/bin/bash
 
 ####################################################################################################
-# DEFINITIONS
+# EXECUTE CPU SIZE RUNS
 ####################################################################################################
-# Path definitions
-OUT_PATH=output
-BIN_PATH=bin
-
-# Run characteristics
-CPU_SIZE_RANGE="10 15 20 25 30 35 40"
-GPU_SIZE_RANGE="10 15 20 25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100"
-
-GRID_DIMS=""
-BLOCK_DIMS=""
+./run_cpu.sh
 
 ####################################################################################################
-# PROGRAM EXECUTION FUNCTIONS
+# EXECUTE GPU SIZE RUNS
 ####################################################################################################
-# Function to run the serial configuration 10 times for each size configuration
-run_cpu()
-{
-    for i in {1..10}
+run_gpu run_gpu.sh < input_pascal
+run_gpu run_gpu.sh < input_volta
+run_gpu run_gpu.sh < input_ampere
+
+####################################################################################################
+# EXECUTE GPU DIM RUNS
+####################################################################################################
+run_gpu run_gpu_dim.sh < input_ampere
+
+####################################################################################################
+# VERIFY CPU/GPU CORRECTNESS
+####################################################################################################
+# Compare Voltage CPU Checksum to Comparable GPU (Pascal, Volta, Ampere) Checksums 
+for cpu_name in output/cpu/*.vsum
+do
+    # Compare voltage checksums
+    for gpu_name in output/gpu/*.vsum
     do
-        for s in $CPU_SIZE_RANGE
-        do
-            ./bin/main_cpu $OUT_PATH/cpu_v_${s} $OUT_PATH/cpu_e_${s} $OUT_PATH/cpu_s_${s}
-        done
-    done 
-}
-
-# Function to run each CUDA configuration 10 times with default block/grid
-run_gpu_arch()
-{
-    for i in {1..10}
+        CMD=diff -qs cpu_name gpu_name
+        echo $CMD >> output/compare.txt
+        echo $($CMD) >> output/compare.txt
+    done
+done
+# Compare Field CPU Checksum to Comparable GPU (Pascal, Volta, Ampere) Checksums 
+for cpu_name in output/cpu/*.esum
+do
+    # Compare voltage checksums
+    for gpu_name in output/gpu/*.esum
     do
-        for s in $GPU_SIZE_RANGE
-        do
-            ./bin/main_gpu $OUT_PATH/gpu_p_v_${s} $OUT_PATH/gpu_p_e_${s} $OUT_PATH/gpu_p_s_${s}
-            ./bin/main_gpu $OUT_PATH/gpu_t_v_${s} $OUT_PATH/gpu_t_e_${s} $OUT_PATH/gpu_t_s_${s}
-            ./bin/main_gpu $OUT_PATH/gpu_a_v_${s} $OUT_PATH/gpu_a_e_${s} $OUT_PATH/gpu_a_s_${s}
-        done
-    done 
-}
-
-# Function to run each block/grid dim value 10 times on Ampere
-run_gpu_dim()
-{
-    for i in {1..10}
-    do
-        # for s in $GPU_SIZE_RANGE
-        # do
-        #     ./bin/main_gpu $OUT_PATH/gpu_a_v_${s} $OUT_PATH/gpu_a_e_${s} $OUT_PATH/gpu_a_s_${s}
-        # done
-    done 
-}
+        CMD=diff -qs cpu_name gpu_name
+        echo $CMD >> output/compare.txt
+        echo $($CMD) >> output/compare.txt
+    done
+done
+#find . -type f -name "test.txt"
 
 ####################################################################################################
-# MAIN ROUTINE
+# POST-PROCESS DATA
 ####################################################################################################
-run_cpu()
-#run_gpu_arch()
-#run_gpu_dim()
+# Extract minimum execution time from each configuration and visualize results
+#TODO: Python
