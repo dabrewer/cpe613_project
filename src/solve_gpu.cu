@@ -3,6 +3,9 @@
 #include <stdlib.h>
 #include <math.h>
 
+#include <thrust/extrema.h>
+#include <thrust/execution_policy.h>
+
 #include <solve.h>
 
 using namespace std;
@@ -14,6 +17,7 @@ uint16_t _z_size;
 uint32_t numVoxels;
 float *potentials;
 float *potentials_shadow;
+float *errors;
 bool *isBoundary;
 dim3 dimGrid;
 dim3 dimBlock;
@@ -23,7 +27,7 @@ void initBoundaries();
 void initCapacitor();
 __device__ float sor(uint16_t i, uint16_t x, uint16_t y, uint16_t z, float *potentials, float *potentials_shadow, bool *isBoundary, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size);
 __device__ float residual(uint16_t x, uint16_t y, uint16_t z, float *potentials, float *potentials_shadow, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size);
-__global__ void solveKernel(float *potentials, float *potentials_shadow, bool *isBoundary, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size);
+__global__ void solveKernel(float *potentials, float *potentials_shadow, float *errors, bool *isBoundary, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size);
 
 // Define macro for easier 3d memory access
 #define GET_INDEX(x,y,z) (((z) * _x_size * _y_size) + ((y) * _x_size) + (x))
@@ -42,6 +46,7 @@ void init(uint16_t size, uint16_t tile_width_x, uint16_t tile_width_y, uint16_t 
     // Allocate unified memory for all arrays
     cudaMallocManaged(&potentials,numVoxels*sizeof(float));
     cudaMallocManaged(&potentials_shadow,numVoxels*sizeof(float));
+    cudaMallocManaged(&errors,numVoxels*sizeof(float));
     cudaMallocManaged(&isBoundary,numVoxels*sizeof(bool));
 
     // Init environment
@@ -60,6 +65,7 @@ void deinit()
 {
     cudaFree(potentials);
     cudaFree(potentials_shadow);
+    cudaFree(errors);
     cudaFree(isBoundary);
 }
 
@@ -141,11 +147,14 @@ void initCapacitor()
 void solve()
 {
     cudaError_t error_id;
+    float error;
+
+    error = PRECISION;
 
     //TODO: make kernel call to find precision and convert to while loop
-    for(int i = 0; i < 361; i++)
+    do
     {
-        solveKernel<<<dimGrid, dimBlock>>>(potentials, potentials_shadow, isBoundary, _x_size, _y_size, _z_size);
+        solveKernel<<<dimGrid, dimBlock>>>(potentials, potentials_shadow, errors, isBoundary, _x_size, _y_size, _z_size);
 
         error_id=cudaGetLastError();
         if (error_id != cudaSuccess)
@@ -160,10 +169,12 @@ void solve()
         float *swap = potentials;
         potentials = potentials_shadow;
         potentials_shadow = swap;
-    }
+        
+        error = *thrust::max_element(thrust::device, errors, errors + numVoxels);
+    } while(error > PRECISION);
 }
 
-__global__ void solveKernel(float *potentials, float *potentials_shadow, bool *isBoundary, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size)
+__global__ void solveKernel(float *potentials, float *potentials_shadow, float *errors, bool *isBoundary, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size)
 {
     uint16_t x = (blockDim.x * blockIdx.x) + threadIdx.x;
     uint16_t y = (blockDim.y * blockIdx.y) + threadIdx.y;
@@ -172,7 +183,7 @@ __global__ void solveKernel(float *potentials, float *potentials_shadow, bool *i
 
     potentials_shadow[i] = sor(i,x, y, z, potentials, potentials_shadow, isBoundary, _x_size, _y_size, _z_size);
 
-    //error[i] = fabs(potentials_shadow[i] - potentials[i]);
+    errors[i] = fabs(potentials_shadow[i] - potentials[i]);
 }
 
 __device__ float sor(uint16_t i, uint16_t x, uint16_t y, uint16_t z, float *potentials, float *potentials_shadow, bool *isBoundary, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size)
