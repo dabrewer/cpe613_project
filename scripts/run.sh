@@ -13,19 +13,19 @@ echo RUNNING CPU...
 ####################################################################################################
 echo RUNNING PASCAL...
 GPU_TYPE=pascal
-run_gpu $SCRIPT_PATH/run_gpu.sh < input_pascal
+run_gpu $SCRIPT_PATH/run_gpu.sh < $SCRIPT_PATH/input_pascal
 echo RUNNING VOLTA...
 GPU_TYPE=volta
-run_gpu $SCRIPT_PATH/run_gpu.sh < input_volta
+run_gpu $SCRIPT_PATH/run_gpu.sh < $SCRIPT_PATH/input_volta
 echo RUNNING AMPERE...
 GPU_TYPE=ampere
-run_gpu $SCRIPT_PATH/run_gpu.sh < input_ampere
+run_gpu $SCRIPT_PATH/run_gpu.sh < $SCRIPT_PATH/input_ampere
 
 ####################################################################################################
 # EXECUTE GPU DIM RUNS
 ####################################################################################################
 echo RUNNING DIM...
-run_gpu $SCRIPT_PATH/run_gpu_dim.sh < input_ampere
+run_gpu $SCRIPT_PATH/run_gpu_dim.sh < $SCRIPT_PATH/input_ampere
 
 ####################################################################################################
 # VERIFY CPU/GPU CORRECTNESS
