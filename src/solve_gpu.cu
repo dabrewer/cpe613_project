@@ -181,9 +181,12 @@ __global__ void solveKernel(float *potentials, float *potentials_shadow, float *
     uint16_t z = (blockDim.z * blockIdx.z) + threadIdx.z;
     uint16_t i = GET_INDEX(x,y,z);
 
-    potentials_shadow[i] = sor(i,x, y, z, potentials, potentials_shadow, isBoundary, _x_size, _y_size, _z_size);
+    if(i < (_x_size * _y_size * _z_size))
+    {
+        potentials_shadow[i] = sor(i,x, y, z, potentials, potentials_shadow, isBoundary, _x_size, _y_size, _z_size);
 
-    errors[i] = fabs(potentials_shadow[i] - potentials[i]);
+        errors[i] = fabs(potentials_shadow[i] - potentials[i]);
+    }
 }
 
 __device__ float sor(uint16_t i, uint16_t x, uint16_t y, uint16_t z, float *potentials, float *potentials_shadow, bool *isBoundary, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size)

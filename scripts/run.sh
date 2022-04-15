@@ -6,7 +6,7 @@ SCRIPT_PATH=scripts
 # EXECUTE CPU SIZE RUNS
 ####################################################################################################
 echo RUNNING CPU...
-./$SCRIPT_PATH/run_cpu.sh
+#./$SCRIPT_PATH/run_cpu.sh
 
 ####################################################################################################
 # EXECUTE GPU SIZE RUNS

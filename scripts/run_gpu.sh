@@ -9,7 +9,7 @@ BIN_PATH=bin
 ####################################################################################################
 # Run characteristics
 ####################################################################################################
-GPU_SIZE_RANGE="10 15 20 25 30 35 40 45 50 100 150 200 250 300 350 400 450 500"
+GPU_SIZE_RANGE="8 16 24 32 40 64 96 128 256 512 1024"
 
 ####################################################################################################
 # PROGRAM EXECUTION FUNCTIONS
@@ -18,7 +18,7 @@ for i in {1..10}
 do
     for s in $GPU_SIZE_RANGE
     do
-        ./bin/main_gpu ${s} 16 16 4 $OUT_PATH/${s}.v $OUT_PATH/${s}.e $OUT_PATH/${s}.s >> $OUT_PATH/gpu_${i}_${s}.out
+        ./bin/main_gpu ${s} 8 8 8 $OUT_PATH/${s}.v $OUT_PATH/${s}.e $OUT_PATH/${s}.s >> $OUT_PATH/gpu_${i}_${s}.out
         shasum $OUT_PATH/${s}.v | awk '{print $1}' >> $OUT_PATH/${s}.vsum
         shasum $OUT_PATH/${s}.e | awk '{print $1}' >> $OUT_PATH/${s}.esum
     done
