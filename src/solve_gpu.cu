@@ -36,6 +36,8 @@ __global__ void solveKernel(float *potentials, float *potentials_shadow, float *
 
 void init(uint16_t size, uint16_t tile_width_x, uint16_t tile_width_y, uint16_t tile_width_z)
 {
+    cudaError_t error_id;
+    
     // store x, y, z dimensions
     _x_size = size;
     _y_size = size;
