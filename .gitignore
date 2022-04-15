@@ -4,3 +4,7 @@ output/*
 scripts/.DS_Store
 .DS_Store
 *.o
+scripts/*.i7*
+scripts/*.o7*
+*.i7*
+*.o7*
