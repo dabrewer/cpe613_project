@@ -58,7 +58,24 @@ void init(uint16_t size, uint16_t tile_width_x, uint16_t tile_width_y, uint16_t 
 
     // Init environment
     initBoundaries<<<dimGrid, dimBlock>>>(potentials, isBoundary, _x_size, _y_size, _z_size);
+    error_id=cudaGetLastError();
+    if (error_id != cudaSuccess)
+    {
+        printf( "Attempted Launch of initBoundaries returned %d\n-> %s\n",
+        (int)error_id, cudaGetErrorString(error_id) );
+        exit(EXIT_FAILURE);
+    }
+    cudaDeviceSynchronize();
+
     initCapacitor<<<dimGrid, dimBlock>>>(potentials, isBoundary, _x_size, _y_size, _z_size);
+    error_id=cudaGetLastError();
+    if (error_id != cudaSuccess)
+    {
+        printf( "Attempted Launch of initCapacitor returned %d\n-> %s\n",
+        (int)error_id, cudaGetErrorString(error_id) );
+        exit(EXIT_FAILURE);
+    }
+    cudaDeviceSynchronize();
 }
 
 void deinit()
