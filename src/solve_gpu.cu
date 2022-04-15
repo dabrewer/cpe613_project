@@ -95,8 +95,8 @@ __global__ void initBoundaries(float *potentials, bool *isBoundary, uint16_t _x_
 
     if((x == 0) || x == (_x_size - 1) || (y == 0) || (_y_size - 1) || (z == 0) || (_z_size - 1))
     {
-        potentials[GET_INDEX(x,j,k)] = 0.0;
-        isBoundary[GET_INDEX(x,j,k)] = true;
+        potentials[i] = 0.0;
+        isBoundary[i] = true;
     }
 }
 
@@ -127,13 +127,13 @@ __global__ void initCapacitor(float *potentials, bool *isBoundary, uint16_t _x_s
     {
         if((y >= y1_min) && (y <= y1_max))
         {
-            potentials[GET_INDEX(x,y,z)] = plate1_potential;
-            isBoundary[GET_INDEX(z,y,z)] = true;
+            potentials[i] = plate1_potential;
+            isBoundary[i] = true;
         }
         if((y >= y2_min) && (y <= y2_max))
         {
-            potentials[GET_INDEX(x,y,z)] = plate2_potential;
-            isBoundary[GET_INDEX(z,y,z)] = true;
+            potentials[i] = plate2_potential;
+            isBoundary[i] = true;
         }
     }
 }
