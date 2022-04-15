@@ -23,8 +23,8 @@ dim3 dimGrid;
 dim3 dimBlock;
 
 // Private function declarations
-void initBoundaries();
-void initCapacitor();
+__global__ void initBoundaries(float *potentials, bool *isBoundary, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size);
+__global__ void initCapacitor(float *potentials, bool *isBoundary, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size);
 __device__ float sor(uint16_t i, uint16_t x, uint16_t y, uint16_t z, float *potentials, float *potentials_shadow, bool *isBoundary, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size);
 __device__ float residual(uint16_t x, uint16_t y, uint16_t z, float *potentials, float *potentials_shadow, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size);
 __global__ void solveKernel(float *potentials, float *potentials_shadow, float *errors, bool *isBoundary, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size);
@@ -49,16 +49,16 @@ void init(uint16_t size, uint16_t tile_width_x, uint16_t tile_width_y, uint16_t 
     cudaMallocManaged(&errors,numVoxels*sizeof(float));
     cudaMallocManaged(&isBoundary,numVoxels*sizeof(bool));
 
-    // Init environment
-    initBoundaries();
-    initCapacitor();
-
     // Init grid dimensions
     dimGrid.x = iceil(_x_size, tile_width_x);
     dimGrid.y = iceil(_y_size, tile_width_y);
     dimGrid.y = iceil(_z_size, tile_width_z);
     // Init block dimensions
     dimBlock = dim3(tile_width_x, tile_width_y, tile_width_z);
+
+    // Init environment
+    initBoundaries<<<dimGrid, dimBlock>>>(potentials, isBoundary, _x_size, _y_size, _z_size);
+    initCapacitor<<<dimGrid, dimBlock>>>(potentials, isBoundary, _x_size, _y_size, _z_size);
 }
 
 void deinit()
@@ -69,45 +69,27 @@ void deinit()
     cudaFree(isBoundary);
 }
 
-void initBoundaries()
+__global__ void initBoundaries(float *potentials, bool *isBoundary, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size)
 {
-    // Set x-plane boundaries
-    for(int j = 0; j < _y_size; j++)
+    uint16_t x = (blockDim.x * blockIdx.x) + threadIdx.x;
+    uint16_t y = (blockDim.y * blockIdx.y) + threadIdx.y;
+    uint16_t z = (blockDim.z * blockIdx.z) + threadIdx.z;
+    uint16_t i = GET_INDEX(x,y,z);
+
+    if((x == 0) || x == (_x_size - 1) || (y == 0) || (_y_size - 1) || (z == 0) || (_z_size - 1))
     {
-        for(int k = 0; k < _z_size; k++)
-        {
-            potentials[GET_INDEX(0,j,k)] = 0.0;
-            isBoundary[GET_INDEX(0,j,k)] = true;
-            potentials[GET_INDEX((_x_size-1),j,k)] = 0.0;
-            isBoundary[GET_INDEX((_x_size-1),j,k)] = true;
-        }
-    }
-    // Set y-plane boundaries
-    for(int i = 0; i < _x_size; i++)
-    {
-        for(int k = 0; k < _z_size; k++)
-        {
-            potentials[GET_INDEX(i,0,k)] = 0.0;
-            isBoundary[GET_INDEX(i,0,k)] = true;
-            potentials[GET_INDEX(i,(_y_size-1),k)] = 0.0;
-            isBoundary[GET_INDEX(i,(_y_size-1),k)] = true;
-        }
-    }
-    // Set z-plane boundaries
-    for(int i = 0; i < _x_size; i++)
-    {
-        for(int j = 0; j < _y_size; j++)
-        {
-            potentials[GET_INDEX(i,j,0)] = 0.0;
-            isBoundary[GET_INDEX(i,j,0)] = true;
-            potentials[GET_INDEX(i,j,(_x_size-1))] = 0.0;
-            isBoundary[GET_INDEX(i,j,(_x_size-1))] = true;
-        }
+        potentials[GET_INDEX(x,j,k)] = 0.0;
+        isBoundary[GET_INDEX(x,j,k)] = true;
     }
 }
 
-void initCapacitor()
+__global__ void initCapacitor(float *potentials, bool *isBoundary, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size)
 {
+    uint16_t x = (blockDim.x * blockIdx.x) + threadIdx.x;
+    uint16_t y = (blockDim.y * blockIdx.y) + threadIdx.y;
+    uint16_t z = (blockDim.z * blockIdx.z) + threadIdx.z;
+    uint16_t i = GET_INDEX(x,y,z);
+
     // Define plate potential
     float plate1_potential = 12.0;
     float plate2_potential = -12.0;
@@ -124,22 +106,17 @@ void initCapacitor()
     uint16_t y2_min = (_y_size / 10) * 6;
     uint16_t y2_max = ((_y_size / 10) * 7) - 1;
 
-    for(int i = x_min; i <= x_max; i++)
+    if((x >= x_min) && (x <= x_max) && (z >= z_min) && (z <= z_max))
     {
-        for(int k = z_min; k <= z_max; k++)
+        if((y >= y1_min) && (y <= y1_max))
         {
-            // Set potentials for plate 1
-            for(int j = y1_min; j <= y1_max; j++)
-            {
-                potentials[GET_INDEX(i,j,k)] = plate1_potential;
-                isBoundary[GET_INDEX(i,j,k)] = true;
-            }
-            // Set potentials for plate 2
-            for(int j = y2_min; j <= y2_max; j++)
-            {
-                potentials[GET_INDEX(i,j,k)] = plate2_potential;
-                isBoundary[GET_INDEX(i,j,k)] = true;
-            }
+            potentials[GET_INDEX(x,y,z)] = plate1_potential;
+            isBoundary[GET_INDEX(z,y,z)] = true;
+        }
+        if((y >= y2_min) && (y <= y2_max))
+        {
+            potentials[GET_INDEX(x,y,z)] = plate2_potential;
+            isBoundary[GET_INDEX(z,y,z)] = true;
         }
     }
 }
