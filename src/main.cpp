@@ -55,9 +55,9 @@ int main( int argc, char *argv[] )
         return -1;
     }
 
-    if(atoi(MESH_SIZE) == 0 || atoi(MESH_SIZE) < 10)
+    if(atoi(MESH_SIZE) == 0 || atoi(MESH_SIZE) < 8)
     {
-        cout << "Mesh size must be an integer >= 10";
+        cout << "Mesh size must be an integer >= 8";
         return -1;
     }
 
