@@ -37,7 +37,7 @@ __global__ void solveKernel(float *potentials, float *potentials_shadow, float *
 void init(uint16_t size, uint16_t tile_width_x, uint16_t tile_width_y, uint16_t tile_width_z)
 {
     cudaError_t error_id;
-    
+
     // store x, y, z dimensions
     _x_size = size;
     _y_size = size;
@@ -95,7 +95,7 @@ __global__ void initBoundaries(float *potentials, bool *isBoundary, uint16_t _x_
     uint16_t z = (blockDim.z * blockIdx.z) + threadIdx.z;
     uint16_t i = GET_INDEX(x,y,z);
 
-    if((x == 0) || x == (_x_size - 1) || (y == 0) || (_y_size - 1) || (z == 0) || (_z_size - 1))
+    if((x == 0) || (y == 0) || (z == 0) || (x == (_x_size - 1)) || (y == (_y_size - 1)) || (z == (_z_size - 1)))
     {
         potentials[i] = 0.0;
         isBoundary[i] = true;
