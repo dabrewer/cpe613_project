@@ -19,6 +19,7 @@ float *potentials;
 float *potentials_shadow;
 float *errors;
 bool *isBoundary;
+float *fields;
 dim3 dimGrid;
 dim3 dimBlock;
 
@@ -28,6 +29,9 @@ __global__ void initCapacitor(float *potentials, bool *isBoundary, uint16_t _x_s
 __device__ float sor(uint16_t i, uint16_t x, uint16_t y, uint16_t z, float *potentials, float *potentials_shadow, bool *isBoundary, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size);
 __device__ float residual(uint16_t x, uint16_t y, uint16_t z, float *potentials, float *potentials_shadow, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size);
 __global__ void solveKernel(float *potentials, float *potentials_shadow, float *errors, bool *isBoundary, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size);
+void solve_potential();
+void solve_field();
+__global__void calc_field(float *potentials, float *fields);
 
 // Define macro for easier 3d memory access
 #define GET_INDEX(x,y,z) (((z) * _x_size * _y_size) + ((y) * _x_size) + (x))
@@ -50,6 +54,7 @@ void init(uint16_t size, uint16_t tile_width_x, uint16_t tile_width_y, uint16_t 
     cudaMallocManaged(&potentials_shadow,numVoxels*sizeof(float));
     cudaMallocManaged(&errors,numVoxels*sizeof(float));
     cudaMallocManaged(&isBoundary,numVoxels*sizeof(bool));
+    cudaMallocManaged(&fields,numVoxels*sizeof(float)*3);
 
     // Init grid dimensions
     dimGrid.x = iceil(_x_size, tile_width_x);
@@ -86,6 +91,7 @@ void deinit()
     cudaFree(potentials_shadow);
     cudaFree(errors);
     cudaFree(isBoundary);
+    cudaFree(fields);
 }
 
 __global__ void initBoundaries(float *potentials, bool *isBoundary, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size)
@@ -141,6 +147,64 @@ __global__ void initCapacitor(float *potentials, bool *isBoundary, uint16_t _x_s
 }
 
 void solve()
+{
+    solve_potential();
+    solve_field();
+}
+
+void solve_field()
+{
+    cudaError_t error_id;
+
+    calc_field<<<dimGrid, dimBlock>>>(potentials, fields);
+
+    error_id=cudaGetLastError();
+    if (error_id != cudaSuccess)
+    {
+        printf( "Attempted Launch of calc_field kernel returned %d\n-> %s\n",
+        (int)error_id, cudaGetErrorString(error_id) );
+        exit(EXIT_FAILURE);
+    }
+
+    cudaDeviceSynchronize();
+}
+
+__global__ void calc_field(float *potentials, float *fields)
+{
+    uint16_t x = (blockDim.x * blockIdx.x) + threadIdx.x;
+    uint16_t y = (blockDim.y * blockIdx.y) + threadIdx.y;
+    uint16_t z = (blockDim.z * blockIdx.z) + threadIdx.z;
+
+    // Approximate Field with Stencil Computation
+    // Must ensure not to reach outside mesh model
+
+    // Calculate dV_dx
+    // Consider both boundary conditions as special cases
+    if((x > 0) && (x < (_x_size-1)))
+        fields[i] = potentials[GET_INDEX(x-1,y,z)] - potentials[GET_INDEX(x+1,y,z)];
+    if(x == 0)
+        fields[i] = potentials[GET_INDEX(x,y,z)] -  potentials[GET_INDEX(x+1,y,z)];
+    if(x == (_x_size-1))
+        fields[i] =  potentials[GET_INDEX(x-1,y,z)] - potentials[GET_INDEX(x,y,z)];
+    // Calculate dV_dy
+    // Consider both boundary conditions as special cases
+    if((y > 0) && (y < (_y_size-1)))
+        fields[i+numVoxels] = potentials[GET_INDEX(x,y-1,z)] - potentials[GET_INDEX(x,y+1,z)];
+    if(y == 0)
+        fields[i+numVoxels] = potentials[GET_INDEX(x,y,z)] - potentials[GET_INDEX(x,y+1,z)];
+    if(y == (_y_size-1))
+        fields[i+numVoxels] = potentials[GET_INDEX(x,y-1,z)] - potentials[GET_INDEX(x,y,z)];
+    // Calculate dV_dz
+    // Consider both boundary conditions as special cases
+    if((z > 0) && (z < (_z_size-1)))
+        fields[i+(2*numVoxels)] = potentials[GET_INDEX(x,y,z-1)] - potentials[GET_INDEX(x,y,z+1)];
+    if(z == 0)
+        fields[i+(2*numVoxels)] = potentials[GET_INDEX(x,y,z)] - potentials[GET_INDEX(x,y,z+1)];
+    if(z == (_z_size-1))
+        fields[i+(2*numVoxels)] = potentials[GET_INDEX(x,y,z-1)] - potentials[GET_INDEX(x,y,z)];
+}
+
+void solve_potential()
 {
     cudaError_t error_id;
     float error;
@@ -239,9 +303,7 @@ void save(const char *pfname, const char *ffname)
     fp = fopen(ffname, "w");
     for(uint32_t i = 0; i < numVoxels; i++)
     {
-        float field[3];
-       // potentials[i].getField(field);
-        fprintf(fp, "%lf\t%lf\t%lf\n", field[0], field[1], field[2]);
+        fprintf(fp, "%lf\t%lf\t%lf\n", field[i], field[i+numVoxels], field[i+(2*numVoxels)]);
     }
     fclose(fp);
 }
