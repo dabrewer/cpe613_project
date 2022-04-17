@@ -12,8 +12,8 @@ using namespace std;
 // CMD LINE ARG DEFINITIONS
 // ################################################################################
 #ifdef GPU
-#define NUM_ARGS    8
-#define USAGE       "./bin/main_gpu [MESH_SIZE] [TILE_WIDTH_X] [TILE_WIDTH_Y] [TILE_WIDTH_Z] [FNAME_MESH_OUT] [FNAME_FIELD_OUT] [FNAME_STAT_OUT]"
+#define NUM_ARGS    9
+#define USAGE       "./bin/main_gpu [MESH_SIZE] [TILE_WIDTH_X] [TILE_WIDTH_Y] [TILE_WIDTH_Z] [FNAME_MESH_OUT] [FNAME_FIELD_OUT] [FNAME_STAT_OUT] [SAVE_FILES]"
 #define MESH_SIZE       argv[1]
 #define TILE_WIDTH_X    argv[2]
 #define TILE_WIDTH_Y    argv[3]
@@ -21,13 +21,15 @@ using namespace std;
 #define FNAME_MESH_OUT  argv[5]
 #define FNAME_FIELD_OUT argv[6]
 #define FNAME_STAT_OUT  argv[7]
+#define SAVE_FILES      argv[8][0]
 #else
-#define NUM_ARGS    5
-#define USAGE       "./bin/main_cpu [MESH_SIZE] [FNAME_MESH_OUT] [FNAME_FIELD_OUT] [FNAME_STAT_OUT]"
-#define MESH_SIZE   argv[1]
-#define FNAME_MESH_OUT   argv[2]
-#define FNAME_FIELD_OUT   argv[3]
-#define FNAME_STAT_OUT   argv[4]
+#define NUM_ARGS    6
+#define USAGE       "./bin/main_cpu [MESH_SIZE] [FNAME_MESH_OUT] [FNAME_FIELD_OUT] [FNAME_STAT_OUT] [SAVE_FILES]"
+#define MESH_SIZE       argv[1]
+#define FNAME_MESH_OUT  argv[2]
+#define FNAME_FIELD_OUT argv[3]
+#define FNAME_STAT_OUT  argv[4]
+#define SAVE_FILES      argv[5][0]
 #endif
 
 // ################################################################################
@@ -91,7 +93,10 @@ int main( int argc, char *argv[] )
     cout << "Elapsed Time: " << TIMER_ELAPSED << endl;
 
     // Save mesh model to output file
-    save(FNAME_MESH_OUT, FNAME_FIELD_OUT);
+    if(SAVE_FILES == 'y')
+    {
+        save(FNAME_MESH_OUT, FNAME_FIELD_OUT);
+    }
 
     // Append run statistics to output file
     statFile.open(FNAME_STAT_OUT, ios_base::app);

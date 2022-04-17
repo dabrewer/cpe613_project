@@ -29,7 +29,7 @@ do
                 if [ $(($i * $j * $k)) -le 1024 ]
                 then
                     #echo "$i" "$j" "$k";
-                    ./bin/main_gpu "$SIZE" "$i" "$j" "$k" $OUT_PATH/$SIZE.v $OUT_PATH/$SIZE.e $OUT_PATH/$SIZE.s >> $OUT_PATH/gpu_${c}_${i}_${j}_${k}.out
+                    ./bin/main_gpu "$SIZE" "$i" "$j" "$k" $OUT_PATH/$SIZE.v $OUT_PATH/$SIZE.e $OUT_PATH/$SIZE.s n >> $OUT_PATH/gpu_${c}_${i}_${j}_${k}.out
                 fi
             done
         done

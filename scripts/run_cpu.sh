@@ -6,21 +6,29 @@
 OUT_PATH=output/cpu
 BIN_PATH=bin
 
+if [ -z ${SAVE_OUTPUT} ]
+then
+    SAVE_OUTPUT=n
+fi
+
+if [ -z ${ITER} ]
+then
+    ITER=1
+fi
+
 ####################################################################################################
 # Run characteristics
 ####################################################################################################
-CPU_SIZE_RANGE="8 16 24 32 40"
+CPU_SIZE_RANGE="16 24 32 40"
 
 ####################################################################################################
 # PROGRAM EXECUTION FUNCTIONS
 ####################################################################################################
-for i in {1..10}
+for i in {1..$ITER}
 do
     echo Testing...
     for s in $CPU_SIZE_RANGE
     do
-        ./bin/main_cpu ${s} $OUT_PATH/${s}.v $OUT_PATH/${s}.e $OUT_PATH/stat.out >> $OUT_PATH/cpu_${i}_${s}.txt
-        shasum $OUT_PATH/${s}.v | awk '{print $1}' >> $OUT_PATH/${s}.vsum
-        shasum $OUT_PATH/${s}.e | awk '{print $1}' >> $OUT_PATH/${s}.esum
+        ./bin/main_cpu ${s} $OUT_PATH/${s}.v $OUT_PATH/${s}.e $OUT_PATH/${s}.s $SAVE_OUTPUT >> $OUT_PATH/cpu_${i}_${s}.txt
     done
 done
