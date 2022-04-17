@@ -31,7 +31,7 @@ __device__ float residual(uint16_t x, uint16_t y, uint16_t z, float *potentials,
 __global__ void solveKernel(float *potentials, float *potentials_shadow, float *errors, bool *isBoundary, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size);
 void solve_potential();
 void solve_field();
-__global__void calc_field(float *potentials, float *fields);
+__global__ void calc_field(float *potentials, float *fields, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size);
 
 // Define macro for easier 3d memory access
 #define GET_INDEX(x,y,z) (((z) * _x_size * _y_size) + ((y) * _x_size) + (x))
@@ -156,7 +156,7 @@ void solve_field()
 {
     cudaError_t error_id;
 
-    calc_field<<<dimGrid, dimBlock>>>(potentials, fields);
+    calc_field<<<dimGrid, dimBlock>>>(potentials, fields, _x_size, _y_size, _z_size);
 
     error_id=cudaGetLastError();
     if (error_id != cudaSuccess)
@@ -169,11 +169,13 @@ void solve_field()
     cudaDeviceSynchronize();
 }
 
-__global__ void calc_field(float *potentials, float *fields)
+__global__ void calc_field(float *potentials, float *fields, uint16_t _x_size, uint16_t _y_size, uint16_t _z_size)
 {
     uint16_t x = (blockDim.x * blockIdx.x) + threadIdx.x;
     uint16_t y = (blockDim.y * blockIdx.y) + threadIdx.y;
     uint16_t z = (blockDim.z * blockIdx.z) + threadIdx.z;
+    uint16_t i = GET_INDEX(x,y,z);
+    uint32_t numVoxels = _x_size * _y_size * _z_size;
 
     // Approximate Field with Stencil Computation
     // Must ensure not to reach outside mesh model
@@ -303,7 +305,7 @@ void save(const char *pfname, const char *ffname)
     fp = fopen(ffname, "w");
     for(uint32_t i = 0; i < numVoxels; i++)
     {
-        fprintf(fp, "%lf\t%lf\t%lf\n", field[i], field[i+numVoxels], field[i+(2*numVoxels)]);
+        fprintf(fp, "%lf\t%lf\t%lf\n", fields[i], fields[i+numVoxels], fields[i+(2*numVoxels)]);
     }
     fclose(fp);
 }
