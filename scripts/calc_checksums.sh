@@ -18,7 +18,7 @@ shasum $(ls output/gpu/ampere/*.e) >> output/gpu/ampere/ampere.esum
 
 # PRINT CPU CHECKSUMS
 cat $(ls output/cpu/*.vsum)
-cat $(ls output/cpu/*.vsum)
+cat $(ls output/cpu/*.esum)
 
 # PRINT GPU CHECKSUMS
 cat $(ls output/gpu/*/*.vsum)
