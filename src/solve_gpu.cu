@@ -59,7 +59,7 @@ void init(uint16_t size, uint16_t tile_width_x, uint16_t tile_width_y, uint16_t 
     // Init grid dimensions
     dimGrid.x = iceil(_x_size, tile_width_x);
     dimGrid.y = iceil(_y_size, tile_width_y);
-    dimGrid.y = iceil(_z_size, tile_width_z);
+    dimGrid.z = iceil(_z_size, tile_width_z);
     // Init block dimensions
     dimBlock = dim3(tile_width_x, tile_width_y, tile_width_z);
 
